@@ -20,6 +20,12 @@ export async function GET() {
       );
     }
 
+    // Get retailer's case price
+    const retailer = await prisma.retailer.findUnique({
+      where: { id: user.retailerId },
+      select: { casePrice: true },
+    });
+
     const retailerSkus = await prisma.retailerSKU.findMany({
       where: {
         retailerId: user.retailerId,
@@ -38,15 +44,24 @@ export async function GET() {
       },
     });
 
-    const catalog = retailerSkus.map((rs) => ({
-      id: rs.sku.id,
-      skuCode: rs.sku.skuCode,
-      name: rs.sku.name,
-      price: rs.priceOverride ?? rs.sku.basePrice,
-      packSize: rs.sku.packSize,
-      unitOfMeasure: rs.sku.unitOfMeasure,
-      imageUrl: rs.sku.imageUrl,
-    }));
+    // Use retailer's case price if set, otherwise fall back to SKU price
+    const catalog = retailerSkus.map((rs) => {
+      // If retailer has a case price, use that (divided by pack size to get unit price)
+      // Otherwise use the SKU-specific price override or base price
+      const unitPrice = retailer?.casePrice
+        ? Number(retailer.casePrice) / rs.sku.packSize
+        : (rs.priceOverride ?? rs.sku.basePrice);
+
+      return {
+        id: rs.sku.id,
+        skuCode: rs.sku.skuCode,
+        name: rs.sku.name,
+        price: unitPrice,
+        packSize: rs.sku.packSize,
+        unitOfMeasure: rs.sku.unitOfMeasure,
+        imageUrl: rs.sku.imageUrl,
+      };
+    });
 
     return NextResponse.json({ catalog });
   } catch (error) {

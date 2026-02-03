@@ -8,6 +8,7 @@ interface Retailer {
   code: string;
   contactEmail: string;
   paymentTermsDays: number;
+  casePrice: number | null;
   addressLine1: string | null;
   city: string | null;
   postcode: string | null;
@@ -25,11 +26,21 @@ interface Retailer {
   };
 }
 
+const CASE_PRICE_OPTIONS = [
+  { value: '', label: 'Not set' },
+  { value: '19.50', label: '£19.50' },
+  { value: '21.42', label: '£21.42' },
+  { value: '22.80', label: '£22.80' },
+  { value: '23.40', label: '£23.40' },
+  { value: '24.90', label: '£24.90' },
+];
+
 interface FormData {
   name: string;
   code: string;
   contactEmail: string;
   paymentTermsDays: number;
+  casePrice: string;
   addressLine1: string;
   city: string;
   postcode: string;
@@ -40,7 +51,8 @@ const emptyForm: FormData = {
   name: '',
   code: '',
   contactEmail: '',
-  paymentTermsDays: 30,
+  paymentTermsDays: 14,
+  casePrice: '',
   addressLine1: '',
   city: '',
   postcode: '',
@@ -85,6 +97,7 @@ export default function SuperadminRetailersPage() {
       code: retailer.code,
       contactEmail: retailer.contactEmail,
       paymentTermsDays: retailer.paymentTermsDays,
+      casePrice: retailer.casePrice ? String(retailer.casePrice) : '',
       addressLine1: retailer.addressLine1 || '',
       city: retailer.city || '',
       postcode: retailer.postcode || '',
@@ -238,6 +251,18 @@ export default function SuperadminRetailersPage() {
                 </select>
               </div>
               <div>
+                <label className="label">Case Price</label>
+                <select
+                  className="input"
+                  value={formData.casePrice}
+                  onChange={(e) => setFormData({ ...formData, casePrice: e.target.value })}
+                >
+                  {CASE_PRICE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
                 <label className="label">Address</label>
                 <input
                   type="text"
@@ -293,6 +318,7 @@ export default function SuperadminRetailersPage() {
               <th>Name</th>
               <th>Code</th>
               <th>Contact</th>
+              <th>Case Price</th>
               <th>Payment Terms</th>
               <th>Users</th>
               <th>Orders</th>
@@ -313,6 +339,9 @@ export default function SuperadminRetailersPage() {
                 </td>
                 <td style={{ fontFamily: 'monospace' }}>{retailer.code}</td>
                 <td>{retailer.contactEmail}</td>
+                <td style={{ fontWeight: 600 }}>
+                  {retailer.casePrice ? `£${Number(retailer.casePrice).toFixed(2)}` : <span style={{ color: 'var(--gray-400)' }}>-</span>}
+                </td>
                 <td>Net {retailer.paymentTermsDays}</td>
                 <td>{retailer.users.length}</td>
                 <td>{retailer._count.orders}</td>

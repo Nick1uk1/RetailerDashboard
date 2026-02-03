@@ -14,6 +14,7 @@ model Retailer {
   contactEmail     String
   groupName        String?        // For chain stores (e.g., "Connect", "Lincolnshire Coop")
   paymentTermsDays Int            @default(30) // Net 30, Net 60, etc.
+  casePrice        Decimal?       // Standard case price for this retailer (e.g., 23.40, 22.80, 21.42, 24.90, 19.50)
   // Address fields for Linnworks
   addressLine1     String?
   addressLine2     String?

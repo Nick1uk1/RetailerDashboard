@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     await requireSuperadmin();
 
     const body = await request.json();
-    const { name, code, contactEmail, paymentTermsDays, addressLine1, city, postcode, phone } = body;
+    const { name, code, contactEmail, paymentTermsDays, casePrice, addressLine1, city, postcode, phone } = body;
 
     if (!name || !code || !contactEmail) {
       return NextResponse.json(
@@ -74,7 +74,8 @@ export async function POST(request: NextRequest) {
         name,
         code,
         contactEmail,
-        paymentTermsDays: paymentTermsDays || 30,
+        paymentTermsDays: paymentTermsDays || 14,
+        casePrice: casePrice ? parseFloat(casePrice) : null,
         addressLine1,
         city,
         postcode,
