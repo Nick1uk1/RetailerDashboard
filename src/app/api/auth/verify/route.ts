@@ -27,17 +27,25 @@ export async function GET(request: NextRequest) {
     const sessionToken = await createSession(result.userId!);
     await setSessionCookie(sessionToken);
 
-    // Get user role to determine redirect
+    // Get user to determine redirect
     const user = await prisma.retailerUser.findUnique({
       where: { id: result.userId! },
-      select: { role: true },
+      select: { role: true, passwordHash: true },
     });
 
-    const redirectTo = user?.role === 'SUPERADMIN' ? '/superadmin-retailers' : '/catalog';
+    // If user has no password, redirect to setup page
+    let redirectTo: string;
+    if (!user?.passwordHash) {
+      redirectTo = '/setup-password';
+    } else if (user?.role === 'SUPERADMIN') {
+      redirectTo = '/superadmin-retailers';
+    } else {
+      redirectTo = '/catalog';
+    }
 
     return NextResponse.json({
       success: true,
-      message: 'Successfully logged in',
+      message: user?.passwordHash ? 'Successfully logged in' : 'Please set up your password',
       redirectTo,
     });
   } catch (error) {

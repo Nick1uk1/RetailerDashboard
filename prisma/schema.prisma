@@ -33,16 +33,17 @@ model Retailer {
 }
 
 model RetailerUser {
-  id         String    @id @default(uuid())
-  retailerId String?   // Optional for SUPERADMIN users
-  retailer   Retailer? @relation(fields: [retailerId], references: [id])
-  email      String    @unique
-  name       String
-  role       String    @default("BUYER") // BUYER, ADMIN, or SUPERADMIN
-  active     Boolean   @default(true)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  sessions   Session[]
+  id           String    @id @default(uuid())
+  retailerId   String?   // Optional for SUPERADMIN users
+  retailer     Retailer? @relation(fields: [retailerId], references: [id])
+  email        String    @unique
+  name         String
+  passwordHash String?   // Set by user on first login via setup link
+  role         String    @default("BUYER") // BUYER, ADMIN, or SUPERADMIN
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  sessions     Session[]
 }
 
 model SKU {
