@@ -165,10 +165,10 @@ export default function SuperadminUsersPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+      <div className="page-header">
         <h1 className="page-title">Manage Users</h1>
         <button onClick={handleNew} className="btn btn-primary">
-          Add User
+          + Add User
         </button>
       </div>
 
@@ -187,8 +187,8 @@ export default function SuperadminUsersPage() {
       )}
 
       {showForm && (
-        <div className="card" style={{ marginBottom: '1rem' }}>
-          <h2 style={{ marginBottom: '1rem' }}>{editingId ? 'Edit User' : 'New User'}</h2>
+        <div className="card" style={{ marginBottom: '1.5rem', padding: '1.5rem' }}>
+          <h2 style={{ marginBottom: '1.25rem', color: 'var(--forest)', fontWeight: 700 }}>{editingId ? 'Edit User' : 'New User'}</h2>
           <form onSubmit={handleSubmit}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div>
@@ -254,24 +254,24 @@ export default function SuperadminUsersPage() {
         </div>
       )}
 
-      <div className="card">
-        <div style={{ marginBottom: '1rem' }}>
-          <label className="label">Filter by Retailer</label>
-          <select
-            className="input"
-            style={{ width: '300px' }}
-            value={filterRetailer}
-            onChange={(e) => setFilterRetailer(e.target.value)}
-          >
-            <option value="">All retailers</option>
-            {retailers.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name} ({r.code})
-              </option>
-            ))}
-          </select>
-        </div>
+      <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <label className="label" style={{ marginBottom: 0 }}>Filter:</label>
+        <select
+          className="input"
+          style={{ width: '300px' }}
+          value={filterRetailer}
+          onChange={(e) => setFilterRetailer(e.target.value)}
+        >
+          <option value="">All retailers</option>
+          {retailers.map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.name} ({r.code})
+            </option>
+          ))}
+        </select>
+      </div>
 
+      <div className="card">
         <table>
           <thead>
             <tr>
@@ -320,12 +320,12 @@ export default function SuperadminUsersPage() {
                 </td>
                 <td>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button onClick={() => handleEdit(user)} className="btn btn-primary">
+                    <button onClick={() => handleEdit(user)} className="btn btn-primary btn-sm">
                       Edit
                     </button>
                     <button
                       onClick={() => handleToggleActive(user)}
-                      className={user.active ? 'btn btn-danger' : 'btn btn-primary'}
+                      className={`btn btn-sm ${user.active ? 'btn-danger' : 'btn-secondary'}`}
                     >
                       {user.active ? 'Deactivate' : 'Activate'}
                     </button>

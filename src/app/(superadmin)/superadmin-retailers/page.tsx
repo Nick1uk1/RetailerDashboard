@@ -179,10 +179,10 @@ export default function SuperadminRetailersPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+      <div className="page-header">
         <h1 className="page-title">Manage Retailers</h1>
         <button onClick={handleNew} className="btn btn-primary">
-          Add Retailer
+          + Add Retailer
         </button>
       </div>
 
@@ -201,8 +201,8 @@ export default function SuperadminRetailersPage() {
       )}
 
       {showForm && (
-        <div className="card" style={{ marginBottom: '1rem' }}>
-          <h2 style={{ marginBottom: '1rem' }}>{editingId ? 'Edit Retailer' : 'New Retailer'}</h2>
+        <div className="card" style={{ marginBottom: '1.5rem', padding: '1.5rem' }}>
+          <h2 style={{ marginBottom: '1.25rem', color: 'var(--forest)', fontWeight: 700 }}>{editingId ? 'Edit Retailer' : 'New Retailer'}</h2>
           <form onSubmit={handleSubmit}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div>
@@ -352,12 +352,12 @@ export default function SuperadminRetailersPage() {
                 </td>
                 <td>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button onClick={() => handleEdit(retailer)} className="btn btn-primary">
+                    <button onClick={() => handleEdit(retailer)} className="btn btn-primary btn-sm">
                       Edit
                     </button>
                     <button
                       onClick={() => handleToggleActive(retailer)}
-                      className={retailer.active ? 'btn btn-danger' : 'btn btn-primary'}
+                      className={`btn btn-sm ${retailer.active ? 'btn-danger' : 'btn-secondary'}`}
                     >
                       {retailer.active ? 'Deactivate' : 'Activate'}
                     </button>

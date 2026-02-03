@@ -44,7 +44,21 @@ export function PortalHeader({ user }: { user: User }) {
             />
           </Link>
           <nav className="nav">
-            {!isSuperadmin && (
+            {isSuperadmin && (
+              <>
+                <Link href="/superadmin-retailers" className={isActive('/superadmin-retailers') ? 'active' : ''}>
+                  Retailers
+                </Link>
+                <Link href="/superadmin-users" className={isActive('/superadmin-users') ? 'active' : ''}>
+                  Users
+                </Link>
+                <Link href="/superadmin-orders" className={isActive('/superadmin-orders') ? 'active' : ''}>
+                  All Orders
+                </Link>
+                <span style={{ opacity: 0.3, margin: '0 0.25rem' }}>|</span>
+              </>
+            )}
+            {(user.retailer || !isSuperadmin) && (
               <>
                 <Link href="/catalog" className={isActive('/catalog') ? 'active' : ''}>
                   SKU List
@@ -52,10 +66,12 @@ export function PortalHeader({ user }: { user: User }) {
                 <Link href="/orders" className={isActive('/orders') ? 'active' : ''}>
                   Orders
                 </Link>
-                <Link href="/profile" className={isActive('/profile') ? 'active' : ''}>
-                  Profile
-                </Link>
               </>
+            )}
+            {!isSuperadmin && (
+              <Link href="/profile" className={isActive('/profile') ? 'active' : ''}>
+                Profile
+              </Link>
             )}
             {isAdmin && (
               <>
@@ -64,16 +80,6 @@ export function PortalHeader({ user }: { user: User }) {
                 </Link>
                 <Link href="/admin-logs" className={isActive('/admin-logs') ? 'active' : ''}>
                   Logs
-                </Link>
-              </>
-            )}
-            {isSuperadmin && (
-              <>
-                <Link href="/superadmin-retailers" className={isActive('/superadmin-retailers') ? 'active' : ''}>
-                  Retailers
-                </Link>
-                <Link href="/superadmin-users" className={isActive('/superadmin-users') ? 'active' : ''}>
-                  Users
                 </Link>
               </>
             )}

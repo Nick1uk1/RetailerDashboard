@@ -109,12 +109,12 @@ a:hover {
 }
 
 .btn-primary {
-  background-color: var(--charcoal);
+  background-color: var(--forest);
   color: var(--white);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: var(--charcoal-light);
+  background-color: var(--forest-light);
   transform: translateY(-1px);
   box-shadow: var(--shadow);
 }
@@ -141,12 +141,14 @@ a:hover {
 }
 
 .btn-danger {
-  background-color: var(--danger);
-  color: var(--white);
+  background-color: transparent;
+  color: var(--danger);
+  border: 1.5px solid var(--danger);
 }
 
 .btn-danger:hover:not(:disabled) {
-  background-color: #c9694f;
+  background-color: var(--danger);
+  color: var(--white);
 }
 
 .btn-ghost {
@@ -204,8 +206,14 @@ a:hover {
 .card {
   background-color: var(--white);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-md);
   padding: 1.5rem;
+  overflow: hidden;
+}
+
+/* Card with table - no padding needed */
+.card:has(table) {
+  padding: 0;
 }
 
 .card-hover {
@@ -261,22 +269,31 @@ table {
 
 th,
 td {
-  padding: 1rem 1.25rem;
+  padding: 0.875rem 1rem;
   text-align: left;
 }
 
 th {
-  background-color: var(--gray-50);
+  background-color: var(--forest);
   font-weight: 700;
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--gray-600);
-  border-bottom: 2px solid var(--gray-200);
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.9);
+  border-bottom: none;
+}
+
+th:first-child {
+  border-top-left-radius: var(--radius-lg);
+}
+
+th:last-child {
+  border-top-right-radius: var(--radius-lg);
 }
 
 td {
   border-bottom: 1px solid var(--gray-100);
+  font-size: 0.875rem;
 }
 
 tbody tr {
@@ -284,7 +301,11 @@ tbody tr {
 }
 
 tbody tr:hover {
-  background-color: var(--gray-50);
+  background-color: var(--cream-dark);
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
 }
 
 /* Header */
@@ -360,8 +381,8 @@ tbody tr:hover {
 .page-title {
   font-size: 1.75rem;
   font-weight: 700;
-  color: var(--charcoal);
-  margin-bottom: 1.5rem;
+  color: var(--forest);
+  margin-bottom: 0;
   letter-spacing: -0.02em;
 }
 
@@ -370,6 +391,19 @@ tbody tr:hover {
   color: var(--gray-600);
   margin-top: -1rem;
   margin-bottom: 1.5rem;
+}
+
+/* Page header bar */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.5rem;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Product grid */
