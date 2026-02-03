@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 
 interface User {
@@ -14,6 +14,7 @@ interface User {
 
 export function PortalHeader({ user }: { user: User }) {
   const router = useRouter();
+  const pathname = usePathname();
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -23,48 +24,71 @@ export function PortalHeader({ user }: { user: User }) {
   const isAdmin = user.role === 'ADMIN';
   const isSuperadmin = user.role === 'SUPERADMIN';
 
+  const isActive = (path: string) => pathname === path;
+
   return (
     <header className="header">
       <div className="container header-inner">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-          <Link href={isSuperadmin ? '/superadmin-retailers' : '/catalog'} style={{ fontWeight: 600, fontSize: '1.125rem', color: 'var(--gray-900)' }}>
-            {isSuperadmin ? 'Admin Portal' : 'Retailer Portal'}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2.5rem' }}>
+          <Link
+            href={isSuperadmin ? '/superadmin-retailers' : '/catalog'}
+            style={{ display: 'flex', alignItems: 'center' }}
+          >
+            <img
+              src="/images/logo-white.png"
+              alt="Home Cooks"
+              style={{
+                height: '36px',
+                width: 'auto',
+              }}
+            />
           </Link>
           <nav className="nav">
             {!isSuperadmin && (
               <>
-                <Link href="/catalog">Catalog</Link>
-                <Link href="/orders">My Orders</Link>
-                <Link href="/profile">Profile</Link>
+                <Link href="/catalog" className={isActive('/catalog') ? 'active' : ''}>
+                  SKU List
+                </Link>
+                <Link href="/orders" className={isActive('/orders') ? 'active' : ''}>
+                  Orders
+                </Link>
+                <Link href="/profile" className={isActive('/profile') ? 'active' : ''}>
+                  Profile
+                </Link>
               </>
             )}
             {isAdmin && (
               <>
-                <Link href="/admin-orders" style={{ color: 'var(--primary)' }}>
-                  Admin: Orders
+                <Link href="/admin-orders" className={isActive('/admin-orders') ? 'active' : ''}>
+                  Admin Orders
                 </Link>
-                <Link href="/admin-logs" style={{ color: 'var(--primary)' }}>
-                  Admin: Logs
+                <Link href="/admin-logs" className={isActive('/admin-logs') ? 'active' : ''}>
+                  Logs
                 </Link>
               </>
             )}
             {isSuperadmin && (
               <>
-                <Link href="/superadmin-retailers" style={{ color: 'var(--primary)' }}>
+                <Link href="/superadmin-retailers" className={isActive('/superadmin-retailers') ? 'active' : ''}>
                   Retailers
                 </Link>
-                <Link href="/superadmin-users" style={{ color: 'var(--primary)' }}>
+                <Link href="/superadmin-users" className={isActive('/superadmin-users') ? 'active' : ''}>
                   Users
                 </Link>
               </>
             )}
           </nav>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <span style={{ color: 'var(--gray-600)', fontSize: '0.875rem' }}>
-            {user.name} {user.retailer ? `(${user.retailer.name})` : '(Superadmin)'}
-          </span>
-          <button onClick={handleLogout} className="btn btn-secondary">
+        <div className="user-menu">
+          <div className="user-info">
+            <strong>{user.name}</strong>
+            {user.retailer && (
+              <span style={{ marginLeft: '0.5rem', opacity: 0.7 }}>
+                {user.retailer.name}
+              </span>
+            )}
+          </div>
+          <button onClick={handleLogout} className="btn btn-secondary btn-sm">
             Logout
           </button>
         </div>
