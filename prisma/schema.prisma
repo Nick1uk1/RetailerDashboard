@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Retailer {
+  id               String         @id @default(uuid())
+  name             String
+  code             String         @unique
+  contactEmail     String
+  groupName        String?        // For chain stores (e.g., "Connect", "Lincolnshire Coop")
+  paymentTermsDays Int            @default(30) // Net 30, Net 60, etc.
+  // Address fields for Linnworks
+  addressLine1     String?
+  addressLine2     String?
+  addressLine3     String?
+  city             String?
+  county           String?
+  postcode         String?
+  country          String         @default("United Kingdom")
+  phone            String?
+  active           Boolean        @default(true)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  users            RetailerUser[]
+  skus             RetailerSKU[]
+  orders           Order[]
+}
+
+model RetailerUser {
+  id         String    @id @default(uuid())
+  retailerId String?   // Optional for SUPERADMIN users
+  retailer   Retailer? @relation(fields: [retailerId], references: [id])
+  email      String    @unique
+  name       String
+  role       String    @default("BUYER") // BUYER, ADMIN, or SUPERADMIN
+  active     Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  sessions   Session[]
+}
+
+model SKU {
+  id                   String        @id @default(uuid())
+  skuCode              String        @unique
+  name                 String
+  basePrice            Decimal
+  packSize             Int           @default(1)
+  unitOfMeasure        String        @default("EACH")
+  imageUrl             String?
+  linnworksStockItemId String?       // Linnworks inventory GUID for direct linking
+  active               Boolean       @default(true)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  retailers            RetailerSKU[]
+  orderLines           OrderLine[]
+}
+
+model RetailerSKU {
+  retailerId    String
+  retailer      Retailer @relation(fields: [retailerId], references: [id])
+  skuId         String
+  sku           SKU      @relation(fields: [skuId], references: [id])
+  priceOverride Decimal?
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@id([retailerId, skuId])
+}
+
+model Order {
+  id                    String             @id @default(uuid())
+  retailerId            String
+  retailer              Retailer           @relation(fields: [retailerId], references: [id])
+  externalRef           String             @unique
+  poNumber              String?
+  notes                 String?
+  requestedDeliveryDate DateTime?
+  status                String             @default("SUBMITTED")
+  totalAmount           Decimal
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  lines                 OrderLine[]
+  linnworksMap          LinnworksOrderMap?
+  events                OrderEventLog[]
+}
+
+model OrderLine {
+  id        String  @id @default(uuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+  skuId     String
+  sku       SKU     @relation(fields: [skuId], references: [id])
+  skuCode   String
+  skuName   String
+  qty       Int
+  unitPrice Decimal
+  lineTotal Decimal
+}
+
+model LinnworksOrderMap {
+  id        String   @id @default(uuid())
+  orderId   String   @unique
+  order     Order    @relation(fields: [orderId], references: [id])
+  pkOrderId String
+  createdAt DateTime @default(now())
+}
+
+model OrderEventLog {
+  id          String   @id @default(uuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id])
+  eventType   String
+  payloadJson String?
+  createdAt   DateTime @default(now())
+}
+
+model MagicLinkToken {
+  id        String   @id @default(uuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Session {
+  id        String       @id @default(uuid())
+  userId    String
+  user      RetailerUser @relation(fields: [userId], references: [id])
+  token     String       @unique
+  expiresAt DateTime
+  createdAt DateTime     @default(now())
+}
