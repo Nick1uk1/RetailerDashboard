@@ -85,6 +85,7 @@ model Order {
   requestedDeliveryDate DateTime?
   status                String             @default("SUBMITTED")
   totalAmount           Decimal
+  isTest                Boolean            @default(false) // Test orders excluded from reports
   createdAt             DateTime           @default(now())
   updatedAt             DateTime           @updatedAt
   lines                 OrderLine[]
