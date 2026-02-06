@@ -64,6 +64,8 @@ export default function SuperadminOrdersPage() {
   const [filterStatus, setFilterStatus] = useState('');
   const [hideTestOrders, setHideTestOrders] = useState(true); // Hide test orders by default
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
 
   async function loadData() {
     try {
@@ -94,6 +96,29 @@ export default function SuperadminOrdersPage() {
   useEffect(() => {
     loadData();
   }, []);
+
+  async function handleSync() {
+    setSyncing(true);
+    setSyncMessage(null);
+    try {
+      const res = await fetch('/api/sync/linnworks', { method: 'POST' });
+      const data = await res.json();
+
+      if (res.ok) {
+        setSyncMessage(`Synced ${data.synced} order${data.synced !== 1 ? 's' : ''}`);
+        if (data.synced > 0) {
+          loadData(); // Reload orders if any were updated
+        }
+      } else {
+        setSyncMessage(`Sync failed: ${data.error}`);
+      }
+    } catch (err) {
+      setSyncMessage('Sync failed');
+    } finally {
+      setSyncing(false);
+      setTimeout(() => setSyncMessage(null), 5000);
+    }
+  }
 
   async function handleStatusUpdate(orderId: string, newStatus: string) {
     setUpdatingOrderId(orderId);
@@ -141,6 +166,19 @@ export default function SuperadminOrdersPage() {
       <div className="page-header">
         <h1 className="page-title">All Orders</h1>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          {syncMessage && (
+            <span style={{ fontSize: '0.875rem', color: 'var(--sage)', fontWeight: 500 }}>
+              {syncMessage}
+            </span>
+          )}
+          <button
+            onClick={handleSync}
+            disabled={syncing}
+            className="btn btn-secondary btn-sm"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            {syncing ? '⟳ Syncing...' : '⟳ Sync with Linnworks'}
+          </button>
           <span style={{ fontSize: '0.875rem', color: 'var(--gray-600)' }}>
             {filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''}
           </span>

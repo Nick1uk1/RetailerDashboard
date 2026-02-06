@@ -4,6 +4,7 @@ import type {
   LinnworksOrderPayload,
   CreateOrderResult,
   LinnworksClient,
+  LinnworksOrderInfo,
 } from './types';
 
 const AUTH_URL = 'https://api.linnworks.net/api/Auth/AuthorizeByApplication';
@@ -78,6 +79,86 @@ function invalidateToken(): void {
 export class RealLinnworksClient implements LinnworksClient {
   async createOrders(orders: LinnworksOrderPayload[]): Promise<CreateOrderResult[]> {
     return this.createOrdersWithRetry(orders, false);
+  }
+
+  async getOrdersById(pkOrderIds: string[]): Promise<LinnworksOrderInfo[]> {
+    if (pkOrderIds.length === 0) return [];
+
+    const auth = await getAuthToken();
+    const url = `${auth.server}/api/Orders/GetOrdersById`;
+
+    const params = new URLSearchParams({
+      pkOrderIds: JSON.stringify(pkOrderIds),
+    });
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': auth.token,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: params.toString(),
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      logger.error('Linnworks GetOrdersById failed', undefined, {
+        status: response.status,
+        response: text,
+      });
+      throw new Error(`Linnworks GetOrdersById failed: ${response.status}`);
+    }
+
+    const orders = await response.json();
+
+    return orders.map((order: Record<string, unknown>) => {
+      const generalInfo = order.GeneralInfo as Record<string, unknown> || {};
+      return {
+        pkOrderId: String(order.OrderId || ''),
+        referenceNumber: String(generalInfo.ReferenceNum || ''),
+        status: Number(generalInfo.Status || 0),
+        invoicePrinted: Boolean(generalInfo.InvoicePrinted),
+        labelPrinted: Boolean(generalInfo.LabelPrinted),
+        processed: false, // Open orders are not processed
+      };
+    });
+  }
+
+  async getProcessedOrderIds(pkOrderIds: string[]): Promise<string[]> {
+    if (pkOrderIds.length === 0) return [];
+
+    const auth = await getAuthToken();
+    const processedIds: string[] = [];
+
+    // Check each order in processed orders
+    for (const pkOrderId of pkOrderIds) {
+      try {
+        const url = `${auth.server}/api/ProcessedOrders/GetProcessedOrderDetails`;
+        const params = new URLSearchParams({
+          pkOrderId: pkOrderId,
+        });
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Authorization': auth.token,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: params.toString(),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.OrderId) {
+            processedIds.push(pkOrderId);
+          }
+        }
+      } catch (err) {
+        // Order not found in processed orders, that's fine
+      }
+    }
+
+    return processedIds;
   }
 
   private async createOrdersWithRetry(

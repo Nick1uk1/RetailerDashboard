@@ -66,6 +66,17 @@ export interface CreateOrderResult {
   error?: string;
 }
 
+export interface LinnworksOrderInfo {
+  pkOrderId: string;
+  referenceNumber: string;
+  status: number;
+  invoicePrinted: boolean;
+  labelPrinted: boolean;
+  processed: boolean;
+}
+
 export interface LinnworksClient {
   createOrders(orders: LinnworksOrderPayload[]): Promise<CreateOrderResult[]>;
+  getOrdersById(pkOrderIds: string[]): Promise<LinnworksOrderInfo[]>;
+  getProcessedOrderIds(pkOrderIds: string[]): Promise<string[]>;
 }
