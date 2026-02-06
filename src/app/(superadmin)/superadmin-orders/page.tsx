@@ -25,17 +25,33 @@ interface Retailer {
 }
 
 const statusBadgeClass: Record<string, string> = {
-  SUBMITTED: 'badge-info',
-  CREATED_IN_LINNWORKS: 'badge-success',
+  SUBMITTED: 'badge-warning',
+  CREATED_IN_LINNWORKS: 'badge-info',
+  PROCESSING: 'badge-info',
+  SHIPPED: 'badge-success',
+  DELIVERED: 'badge-success',
   FAILED: 'badge-danger',
-  CANCELLED: 'badge-warning',
+  CANCELLED: 'badge-neutral',
 };
 
 const statusLabels: Record<string, string> = {
-  SUBMITTED: 'Submitted',
-  CREATED_IN_LINNWORKS: 'Confirmed',
+  SUBMITTED: 'Pending',
+  CREATED_IN_LINNWORKS: 'Order Placed',
+  PROCESSING: 'Processing',
+  SHIPPED: 'Shipped',
+  DELIVERED: 'Delivered',
   FAILED: 'Failed',
   CANCELLED: 'Cancelled',
+};
+
+const statusIcons: Record<string, string> = {
+  SUBMITTED: '⏳',
+  CREATED_IN_LINNWORKS: '📦',
+  PROCESSING: '⚙️',
+  SHIPPED: '🚚',
+  DELIVERED: '✓',
+  FAILED: '❌',
+  CANCELLED: '🚫',
 };
 
 export default function SuperadminOrdersPage() {
@@ -45,42 +61,68 @@ export default function SuperadminOrdersPage() {
   const [error, setError] = useState('');
   const [filterRetailer, setFilterRetailer] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
+
+  async function loadData() {
+    try {
+      const [ordersRes, retailersRes] = await Promise.all([
+        fetch('/api/superadmin/orders'),
+        fetch('/api/superadmin/retailers'),
+      ]);
+
+      const ordersData = await ordersRes.json();
+      const retailersData = await retailersRes.json();
+
+      if (ordersRes.ok) {
+        setOrders(ordersData.orders);
+      } else {
+        setError(ordersData.error || 'Failed to load orders');
+      }
+
+      if (retailersRes.ok) {
+        setRetailers(retailersData.retailers);
+      }
+    } catch (err) {
+      setError('Something went wrong');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        const [ordersRes, retailersRes] = await Promise.all([
-          fetch('/api/superadmin/orders'),
-          fetch('/api/superadmin/retailers'),
-        ]);
-
-        const ordersData = await ordersRes.json();
-        const retailersData = await retailersRes.json();
-
-        if (ordersRes.ok) {
-          setOrders(ordersData.orders);
-        } else {
-          setError(ordersData.error || 'Failed to load orders');
-        }
-
-        if (retailersRes.ok) {
-          setRetailers(retailersData.retailers);
-        }
-      } catch (err) {
-        setError('Something went wrong');
-      } finally {
-        setLoading(false);
-      }
-    }
-
     loadData();
   }, []);
+
+  async function handleStatusUpdate(orderId: string, newStatus: string) {
+    setUpdatingOrderId(orderId);
+    try {
+      const res = await fetch(`/api/superadmin/orders/${orderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (res.ok) {
+        loadData();
+      }
+    } catch (err) {
+      console.error('Failed to update status');
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  }
 
   const filteredOrders = orders.filter((order) => {
     if (filterRetailer && order.retailer.id !== filterRetailer) return false;
     if (filterStatus && order.status !== filterStatus) return false;
     return true;
   });
+
+  // Count orders by status
+  const statusCounts = orders.reduce((acc, order) => {
+    acc[order.status] = (acc[order.status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
 
   if (loading) {
     return <div>Loading orders...</div>;
@@ -101,6 +143,48 @@ export default function SuperadminOrdersPage() {
         </div>
       </div>
 
+      {/* Status summary cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
+        {[
+          { status: 'SUBMITTED', label: 'Pending', color: '#D4A854' },
+          { status: 'CREATED_IN_LINNWORKS', label: 'Order Placed', color: '#4a9a9d' },
+          { status: 'PROCESSING', label: 'Processing', color: '#4a9a9d' },
+          { status: 'SHIPPED', label: 'Shipped', color: '#7FB069' },
+          { status: 'DELIVERED', label: 'Delivered', color: '#5a8a47' },
+        ].map(({ status, label, color }) => (
+          <div
+            key={status}
+            onClick={() => setFilterStatus(filterStatus === status ? '' : status)}
+            style={{
+              padding: '1rem',
+              backgroundColor: filterStatus === status ? color : 'white',
+              borderRadius: '12px',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              border: `2px solid ${filterStatus === status ? color : 'var(--gray-200)'}`,
+            }}
+          >
+            <div style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>{statusIcons[status]}</div>
+            <div style={{
+              fontSize: '1.5rem',
+              fontWeight: 700,
+              color: filterStatus === status ? 'white' : color,
+            }}>
+              {statusCounts[status] || 0}
+            </div>
+            <div style={{
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              color: filterStatus === status ? 'rgba(255,255,255,0.9)' : 'var(--gray-500)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+            }}>
+              {label}
+            </div>
+          </div>
+        ))}
+      </div>
+
       <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <label className="label" style={{ marginBottom: 0 }}>Retailer:</label>
@@ -118,21 +202,14 @@ export default function SuperadminOrdersPage() {
             ))}
           </select>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <label className="label" style={{ marginBottom: 0 }}>Status:</label>
-          <select
-            className="input"
-            style={{ width: '150px' }}
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
+        {filterStatus && (
+          <button
+            onClick={() => setFilterStatus('')}
+            className="btn btn-secondary btn-sm"
           >
-            <option value="">All statuses</option>
-            <option value="SUBMITTED">Submitted</option>
-            <option value="CREATED_IN_LINNWORKS">Confirmed</option>
-            <option value="FAILED">Failed</option>
-            <option value="CANCELLED">Cancelled</option>
-          </select>
-        </div>
+            Clear status filter
+          </button>
+        )}
       </div>
 
       {filteredOrders.length === 0 ? (
@@ -168,9 +245,12 @@ export default function SuperadminOrdersPage() {
                   <td>{order.lines.length}</td>
                   <td style={{ fontWeight: 600 }}>&pound;{Number(order.totalAmount).toFixed(2)}</td>
                   <td>
-                    <span className={`badge ${statusBadgeClass[order.status] || 'badge-info'}`}>
-                      {statusLabels[order.status] || order.status}
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '1rem' }}>{statusIcons[order.status]}</span>
+                      <span className={`badge ${statusBadgeClass[order.status] || 'badge-info'}`}>
+                        {statusLabels[order.status] || order.status}
+                      </span>
+                    </div>
                   </td>
                   <td style={{ fontSize: '0.875rem' }}>
                     {new Date(order.createdAt).toLocaleDateString('en-GB', {
@@ -180,9 +260,40 @@ export default function SuperadminOrdersPage() {
                     })}
                   </td>
                   <td>
-                    <Link href={`/orders/${order.id}`} className="btn btn-primary btn-sm">
-                      View
-                    </Link>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <Link href={`/orders/${order.id}`} className="btn btn-primary btn-sm">
+                        View
+                      </Link>
+                      {/* Manual status update dropdown - for testing/override */}
+                      {order.status !== 'DELIVERED' && order.status !== 'CANCELLED' && (
+                        <select
+                          className="input"
+                          style={{ width: '120px', padding: '0.375rem 0.5rem', fontSize: '0.75rem' }}
+                          value=""
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              handleStatusUpdate(order.id, e.target.value);
+                            }
+                          }}
+                          disabled={updatingOrderId === order.id}
+                        >
+                          <option value="">Update...</option>
+                          {order.status === 'SUBMITTED' && (
+                            <option value="CREATED_IN_LINNWORKS">→ Order Placed</option>
+                          )}
+                          {(order.status === 'SUBMITTED' || order.status === 'CREATED_IN_LINNWORKS') && (
+                            <option value="PROCESSING">→ Processing</option>
+                          )}
+                          {(order.status === 'CREATED_IN_LINNWORKS' || order.status === 'PROCESSING') && (
+                            <option value="SHIPPED">→ Shipped</option>
+                          )}
+                          {order.status === 'SHIPPED' && (
+                            <option value="DELIVERED">→ Delivered</option>
+                          )}
+                          <option value="CANCELLED">→ Cancel</option>
+                        </select>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -190,6 +301,13 @@ export default function SuperadminOrdersPage() {
           </table>
         </div>
       )}
+
+      <div style={{ marginTop: '1.5rem', padding: '1rem', backgroundColor: 'rgba(157, 213, 216, 0.15)', borderRadius: '8px' }}>
+        <p style={{ fontSize: '0.875rem', color: 'var(--gray-600)', margin: 0 }}>
+          <strong>Note:</strong> Order statuses are normally updated automatically by Linnworks.
+          The manual update dropdown is for testing or override purposes only.
+        </p>
+      </div>
     </div>
   );
 }
