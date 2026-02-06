@@ -52,11 +52,14 @@ export function buildLinnworksPayload(order: OrderWithLines): LinnworksOrderPayl
     Currency: 'GBP',
     ChannelBuyerName: order.retailer.name,
     OrderItems: orderItems,
-    // Set as unpaid, not parked
+    // Always unpaid, never parked
     PaymentStatus: 'UNPAID',
     PaidAmount: 0,
-    Locked: false, // Prevent order from being parked
-    Status: 0, // 0 = Open/Unpaid status
+    Locked: false, // false = NOT parked
+    Status: 0, // 0 = Unpaid
+    // These help prevent auto-parking due to missing mappings
+    MatchPaymentMethodTag: 'Bank Transfer',
+    MatchPostalServiceTag: 'Default',
   };
 
   // Add notes as external notes
