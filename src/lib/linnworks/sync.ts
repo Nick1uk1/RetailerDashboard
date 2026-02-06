@@ -56,6 +56,8 @@ export async function syncOrderStatuses(): Promise<SyncResult> {
     const processedIds = await client.getProcessedOrderIds(pkOrderIds);
     const processedSet = new Set(processedIds);
 
+    logger.info(`Found ${processedSet.size} processed orders in Linnworks`);
+
     // Update statuses based on Linnworks data
     for (const order of ordersToSync) {
       const pkOrderId = order.linnworksMap?.pkOrderId;
@@ -64,16 +66,18 @@ export async function syncOrderStatuses(): Promise<SyncResult> {
       const linnworksOrder = linnworksOrders.find(lo => lo.pkOrderId === pkOrderId);
       let newStatus: string | null = null;
 
-      // Check if order has been dispatched (processed)
+      // Check if order has been dispatched (processed) - this means SHIPPED
       if (processedSet.has(pkOrderId)) {
         if (order.status !== 'SHIPPED' && order.status !== 'DELIVERED') {
           newStatus = 'SHIPPED';
+          logger.info(`Order ${order.externalRef} has been processed in Linnworks → SHIPPED`);
         }
       }
       // Check if invoice has been printed (processing)
       else if (linnworksOrder?.invoicePrinted) {
         if (order.status === 'CREATED_IN_LINNWORKS') {
           newStatus = 'PROCESSING';
+          logger.info(`Order ${order.externalRef} has invoice printed → PROCESSING`);
         }
       }
 

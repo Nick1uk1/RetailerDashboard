@@ -130,10 +130,11 @@ export class RealLinnworksClient implements LinnworksClient {
     const auth = await getAuthToken();
     const processedIds: string[] = [];
 
-    // Check each order in processed orders
+    // Search processed orders by pkOrderId
     for (const pkOrderId of pkOrderIds) {
       try {
-        const url = `${auth.server}/api/ProcessedOrders/GetProcessedOrderDetails`;
+        // Try to get the processed order audit trail - if it exists, order was processed
+        const url = `${auth.server}/api/ProcessedOrders/GetProcessedAuditTrail`;
         const params = new URLSearchParams({
           pkOrderId: pkOrderId,
         });
@@ -149,12 +150,52 @@ export class RealLinnworksClient implements LinnworksClient {
 
         if (response.ok) {
           const data = await response.json();
-          if (data && data.OrderId) {
+          // If we get audit trail data, the order has been processed
+          if (data && (Array.isArray(data) ? data.length > 0 : true)) {
             processedIds.push(pkOrderId);
+            logger.info(`Order ${pkOrderId} found in processed orders`);
           }
         }
       } catch (err) {
         // Order not found in processed orders, that's fine
+      }
+    }
+
+    // Also try searching by reference numbers as backup
+    if (processedIds.length === 0 && pkOrderIds.length > 0) {
+      try {
+        const url = `${auth.server}/api/ProcessedOrders/SearchProcessedOrdersPaged`;
+        const searchRequest = {
+          PageNumber: 1,
+          ResultsPerPage: 100,
+          SearchTerm: '',
+          SearchFilters: {
+            pkOrderIds: pkOrderIds,
+          },
+        };
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Authorization': auth.token,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(searchRequest),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data?.Data) {
+            for (const order of data.Data) {
+              const orderId = order.pkOrderID || order.pkOrderId || order.OrderId;
+              if (orderId && pkOrderIds.includes(orderId)) {
+                processedIds.push(orderId);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        logger.error('Failed to search processed orders', err as Error);
       }
     }
 
