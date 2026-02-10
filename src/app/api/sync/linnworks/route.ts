@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { syncOrderStatuses } from '@/lib/linnworks/sync';
 import { requireSuperadmin, getCurrentUser } from '@/lib/auth/session';
