@@ -78,17 +78,17 @@ export default function SetupPasswordPage() {
             color: '#122627',
             marginBottom: '0.5rem'
           }}>
-            Set Your Password
+            Set Up Your Password
           </h1>
           <p style={{ color: 'var(--gray-600)', fontSize: '0.9375rem' }}>
-            Create a password to secure your account
+            Create a password for faster login next time
           </p>
         </div>
 
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '1rem' }}>
             <label htmlFor="password" className="label">
-              New Password
+              Password
             </label>
             <input
               type="password"
@@ -103,18 +103,19 @@ export default function SetupPasswordPage() {
             />
           </div>
 
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label htmlFor="confirm-password" className="label">
+          <div style={{ marginBottom: '1.25rem' }}>
+            <label htmlFor="confirmPassword" className="label">
               Confirm Password
             </label>
             <input
               type="password"
-              id="confirm-password"
+              id="confirmPassword"
               className="input"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm your password"
+              placeholder="Enter password again"
               required
+              minLength={8}
               style={{ padding: '0.875rem 1rem', fontSize: '1rem' }}
             />
           </div>
@@ -129,7 +130,7 @@ export default function SetupPasswordPage() {
             }}
             disabled={loading}
           >
-            {loading ? 'Setting password...' : 'Set Password & Continue'}
+            {loading ? 'Setting Password...' : 'Set Password'}
           </button>
         </form>
 
@@ -147,6 +148,19 @@ export default function SetupPasswordPage() {
             {error}
           </div>
         )}
+
+        <p style={{
+          marginTop: '2rem',
+          textAlign: 'center',
+          fontSize: '0.8125rem',
+          color: 'var(--gray-500)'
+        }}>
+          You can skip this and use magic links to log in.
+          <br />
+          <a href="/catalog" style={{ color: 'var(--forest)', textDecoration: 'underline' }}>
+            Skip for now
+          </a>
+        </p>
       </div>
     </div>
   );
