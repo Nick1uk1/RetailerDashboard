@@ -12,39 +12,50 @@ interface SendEmailOptions {
 async function sendEmail(options: SendEmailOptions): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
 
+  console.log('=== EMAIL SEND ATTEMPT ===');
+  console.log('To:', options.to);
+  console.log('API Key present:', !!apiKey);
+  console.log('API Key prefix:', apiKey?.substring(0, 10) + '...');
+
   if (!apiKey) {
+    console.log('ERROR: RESEND_API_KEY not configured');
     logger.warn('RESEND_API_KEY not configured - email not sent', { to: options.to });
-    console.log('=== EMAIL NOT SENT (no API key) ===');
-    console.log('To:', options.to);
-    console.log('Subject:', options.subject);
-    console.log('=====================================');
     return false;
   }
 
   try {
+    const payload = {
+      from: process.env.EMAIL_FROM || 'Home Cooks <onboarding@resend.dev>',
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+    };
+
+    console.log('Sending email from:', payload.from);
+
     const response = await fetch(RESEND_API_URL, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        from: process.env.EMAIL_FROM || 'Home Cooks <onboarding@resend.dev>',
-        to: options.to,
-        subject: options.subject,
-        html: options.html,
-      }),
+      body: JSON.stringify(payload),
     });
 
+    const responseText = await response.text();
+    console.log('Resend response status:', response.status);
+    console.log('Resend response:', responseText);
+
     if (!response.ok) {
-      const error = await response.text();
-      logger.error('Failed to send email via Resend', { error, to: options.to });
+      logger.error('Failed to send email via Resend', { error: responseText, to: options.to });
       return false;
     }
 
     logger.info('Email sent successfully', { to: options.to });
+    console.log('=== EMAIL SENT SUCCESSFULLY ===');
     return true;
   } catch (error) {
+    console.log('Email sending exception:', error);
     logger.error('Email sending error', error as Error);
     return false;
   }
