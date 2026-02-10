@@ -80,6 +80,19 @@ export default function SuperadminRetailersPage() {
   const [productRanges, setProductRanges] = useState<ProductRange[]>([]);
   const [loadingRanges, setLoadingRanges] = useState(false);
   const [togglingRange, setTogglingRange] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Filter retailers based on search term
+  const filteredRetailers = retailers.filter((retailer) => {
+    const search = searchTerm.toLowerCase();
+    return (
+      retailer.name.toLowerCase().includes(search) ||
+      retailer.code.toLowerCase().includes(search) ||
+      retailer.contactEmail.toLowerCase().includes(search) ||
+      (retailer.city && retailer.city.toLowerCase().includes(search)) ||
+      (retailer.postcode && retailer.postcode.toLowerCase().includes(search))
+    );
+  });
 
   async function loadRetailers() {
     try {
@@ -422,6 +435,23 @@ export default function SuperadminRetailersPage() {
       )}
 
       <div className="card">
+        {/* Search Box */}
+        <div style={{ marginBottom: '1rem' }}>
+          <input
+            type="text"
+            className="input"
+            placeholder="Search retailers by name, code, email, city, or postcode..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ maxWidth: '400px' }}
+          />
+          {searchTerm && (
+            <span style={{ marginLeft: '1rem', color: 'var(--gray-500)', fontSize: '0.875rem' }}>
+              Showing {filteredRetailers.length} of {retailers.length} retailers
+            </span>
+          )}
+        </div>
+
         <table>
           <thead>
             <tr>
@@ -437,7 +467,7 @@ export default function SuperadminRetailersPage() {
             </tr>
           </thead>
           <tbody>
-            {retailers.map((retailer) => (
+            {filteredRetailers.map((retailer) => (
               <tr key={retailer.id} style={{ opacity: retailer.active ? 1 : 0.5 }}>
                 <td>
                   <div style={{ fontWeight: 500 }}>{retailer.name}</div>
