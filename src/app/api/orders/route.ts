@@ -165,6 +165,7 @@ export async function POST(request: NextRequest) {
       poNumber,
       notes,
       requestedDeliveryDate,
+      isTest: user.role === 'SUPERADMIN', // Superadmin orders excluded from reports
     });
 
     if (!result.success) {

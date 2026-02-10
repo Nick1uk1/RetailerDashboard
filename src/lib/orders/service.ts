@@ -17,6 +17,7 @@ interface CreateOrderInput {
   poNumber?: string;
   notes?: string;
   requestedDeliveryDate?: string;
+  isTest?: boolean;
 }
 
 interface CreateOrderResult {
@@ -118,6 +119,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
           : null,
         status: 'SUBMITTED',
         totalAmount,
+        isTest: input.isTest ?? false,
         lines: {
           create: orderLines,
         },
