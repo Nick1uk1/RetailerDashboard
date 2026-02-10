@@ -7,7 +7,13 @@ export async function GET() {
   try {
     await requireSuperadmin();
 
+    // Exclude HomeCooks HQ (internal) from reports
     const orders = await prisma.order.findMany({
+      where: {
+        retailer: {
+          code: { not: 'HCHQ' }, // Exclude HomeCooks HQ
+        },
+      },
       include: {
         retailer: {
           select: {
