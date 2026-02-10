@@ -29,7 +29,7 @@ async function sendEmail(options: SendEmailOptions): Promise<boolean> {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Home Cooks <orders@homecooks.app>',
+        from: process.env.EMAIL_FROM || 'Home Cooks <onboarding@resend.dev>',
         to: options.to,
         subject: options.subject,
         html: options.html,
