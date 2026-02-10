@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { Suspense, useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function VerifyPage() {
+function VerifyContent() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
   const router = useRouter();
@@ -47,6 +47,26 @@ export default function VerifyPage() {
   }, [searchParams, router]);
 
   return (
+    <div className="card" style={{ maxWidth: '400px', width: '100%', textAlign: 'center' }}>
+      <h1 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '1rem' }}>
+        {status === 'loading' && 'Verifying...'}
+        {status === 'success' && 'Success!'}
+        {status === 'error' && 'Error'}
+      </h1>
+      <p style={{ color: status === 'error' ? 'var(--danger)' : 'var(--gray-600)' }}>
+        {message || 'Please wait while we verify your login link...'}
+      </p>
+      {status === 'error' && (
+        <a href="/login" className="btn btn-primary" style={{ marginTop: '1rem' }}>
+          Back to Login
+        </a>
+      )}
+    </div>
+  );
+}
+
+export default function VerifyPage() {
+  return (
     <div style={{
       minHeight: '100vh',
       display: 'flex',
@@ -54,21 +74,18 @@ export default function VerifyPage() {
       justifyContent: 'center',
       padding: '1rem',
     }}>
-      <div className="card" style={{ maxWidth: '400px', width: '100%', textAlign: 'center' }}>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '1rem' }}>
-          {status === 'loading' && 'Verifying...'}
-          {status === 'success' && 'Success!'}
-          {status === 'error' && 'Error'}
-        </h1>
-        <p style={{ color: status === 'error' ? 'var(--danger)' : 'var(--gray-600)' }}>
-          {message || 'Please wait while we verify your login link...'}
-        </p>
-        {status === 'error' && (
-          <a href="/login" className="btn btn-primary" style={{ marginTop: '1rem' }}>
-            Back to Login
-          </a>
-        )}
-      </div>
+      <Suspense fallback={
+        <div className="card" style={{ maxWidth: '400px', width: '100%', textAlign: 'center' }}>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '1rem' }}>
+            Verifying...
+          </h1>
+          <p style={{ color: 'var(--gray-600)' }}>
+            Please wait while we verify your login link...
+          </p>
+        </div>
+      }>
+        <VerifyContent />
+      </Suspense>
     </div>
   );
 }
