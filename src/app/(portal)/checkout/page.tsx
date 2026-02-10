@@ -62,14 +62,9 @@ export default function CheckoutPage() {
         setStores(data.stores || []);
         setGroupName(data.groupName || '');
 
-        // For superadmins, use the store they selected in catalog
+        // For superadmins, default to first store (they'll select at checkout)
         if (data.isSuperadmin) {
-          const savedStoreId = localStorage.getItem('superadmin_selected_store');
-          if (savedStoreId && data.stores.some((s: Store) => s.id === savedStoreId)) {
-            setSelectedStoreId(savedStoreId);
-          } else {
-            setSelectedStoreId(data.defaultStoreId || data.stores[0]?.id || '');
-          }
+          setSelectedStoreId(data.stores[0]?.id || '');
         } else {
           setSelectedStoreId(data.defaultStoreId);
         }

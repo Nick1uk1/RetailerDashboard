@@ -20,63 +20,36 @@ interface CartItem extends CatalogItem {
   qty: number;
 }
 
-interface Store {
-  id: string;
-  name: string;
-  code: string;
-}
-
 export default function CatalogPage() {
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isSuperadmin, setIsSuperadmin] = useState(false);
-  const [stores, setStores] = useState<Store[]>([]);
-  const [selectedStoreId, setSelectedStoreId] = useState('');
   const router = useRouter();
 
-  // Load stores first (for superadmins)
+  // Check if user is superadmin
   useEffect(() => {
-    async function loadStores() {
+    async function checkSuperadmin() {
       try {
         const res = await fetch('/api/stores');
         const data = await res.json();
         if (res.ok) {
           setIsSuperadmin(data.isSuperadmin || false);
-          setStores(data.stores || []);
-          if (data.isSuperadmin && data.stores?.length > 0) {
-            // Check localStorage for previously selected store
-            const savedStoreId = localStorage.getItem('superadmin_selected_store');
-            if (savedStoreId && data.stores.some((s: Store) => s.id === savedStoreId)) {
-              setSelectedStoreId(savedStoreId);
-            } else {
-              setSelectedStoreId(data.stores[0].id);
-            }
-          }
         }
       } catch (err) {
-        console.error('Failed to load stores:', err);
+        console.error('Failed to check user type:', err);
       }
     }
-    loadStores();
+    checkSuperadmin();
   }, []);
 
-  // Load catalog when store is selected (or for regular users)
+  // Load catalog
   useEffect(() => {
     async function loadCatalog() {
-      // Superadmins need a selected store
-      if (isSuperadmin && !selectedStoreId) {
-        setLoading(false);
-        return;
-      }
-
       setLoading(true);
       try {
-        const url = isSuperadmin
-          ? `/api/catalog?retailerId=${selectedStoreId}`
-          : '/api/catalog';
-        const res = await fetch(url);
+        const res = await fetch('/api/catalog');
         const data = await res.json();
 
         if (res.ok) {
@@ -92,11 +65,6 @@ export default function CatalogPage() {
       }
     }
 
-    // Wait for stores to load for superadmins
-    if (isSuperadmin && stores.length === 0) {
-      return;
-    }
-
     loadCatalog();
 
     // Load cart from localStorage
@@ -104,21 +72,7 @@ export default function CatalogPage() {
     if (savedCart) {
       setCart(JSON.parse(savedCart));
     }
-  }, [isSuperadmin, selectedStoreId, stores.length]);
-
-  // Save selected store for superadmins
-  useEffect(() => {
-    if (isSuperadmin && selectedStoreId) {
-      localStorage.setItem('superadmin_selected_store', selectedStoreId);
-    }
-  }, [isSuperadmin, selectedStoreId]);
-
-  function handleStoreChange(newStoreId: string) {
-    setSelectedStoreId(newStoreId);
-    // Clear cart when changing stores
-    setCart([]);
-    localStorage.removeItem('cart');
-  }
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cart));
@@ -221,48 +175,20 @@ export default function CatalogPage() {
             />
           </div>
 
-          {/* Superadmin Store Selector */}
-          {isSuperadmin && stores.length > 0 && (
+          {/* Superadmin Notice */}
+          {isSuperadmin && (
             <div style={{
               marginTop: '1.5rem',
               padding: '1rem',
               backgroundColor: 'rgba(255,255,255,0.1)',
               borderRadius: '8px',
             }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '0.5rem',
-                color: '#FFFDF6',
-                fontWeight: 600,
-              }}>
-                Order for Store:
-              </label>
-              <select
-                value={selectedStoreId}
-                onChange={(e) => handleStoreChange(e.target.value)}
-                style={{
-                  width: '100%',
-                  maxWidth: '400px',
-                  padding: '0.75rem',
-                  fontSize: '1rem',
-                  borderRadius: '6px',
-                  border: 'none',
-                  backgroundColor: 'white',
-                  cursor: 'pointer',
-                }}
-              >
-                {stores.map((store) => (
-                  <option key={store.id} value={store.id}>
-                    {store.name} ({store.code})
-                  </option>
-                ))}
-              </select>
               <p style={{
-                marginTop: '0.5rem',
+                margin: 0,
                 fontSize: '0.875rem',
-                color: 'rgba(255,253,246,0.7)',
+                color: 'rgba(255,253,246,0.9)',
               }}>
-                Superadmin mode: selecting a store will show their catalog and pricing
+                Superadmin mode: You'll select which store to order for at checkout
               </p>
             </div>
           )}

@@ -1,9 +1,9 @@
 export const dynamic = 'force-dynamic';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth/session';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const user = await getCurrentUser();
 
@@ -14,39 +14,46 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Determine which retailer to load catalog for
-    let retailerId = user.retailerId;
-
-    // Superadmins can specify which retailer's catalog to view
+    // Superadmins see all active SKUs with base pricing
     if (user.role === 'SUPERADMIN') {
-      const { searchParams } = new URL(request.url);
-      const requestedRetailerId = searchParams.get('retailerId');
+      const allSkus = await prisma.sKU.findMany({
+        where: { active: true },
+        include: { range: true },
+        orderBy: { skuCode: 'asc' },
+      });
 
-      if (!requestedRetailerId) {
-        return NextResponse.json(
-          { error: 'Please select a store to view catalog' },
-          { status: 400 }
-        );
-      }
-      retailerId = requestedRetailerId;
+      const catalog = allSkus.map((sku) => ({
+        id: sku.id,
+        skuCode: sku.skuCode,
+        name: sku.name,
+        price: Number(sku.basePrice),
+        packSize: sku.packSize,
+        unitOfMeasure: sku.unitOfMeasure,
+        imageUrl: sku.imageUrl,
+        rangeName: sku.range?.name || 'Other',
+        rangeId: sku.rangeId,
+      }));
+
+      return NextResponse.json({ catalog });
     }
 
-    if (!retailerId) {
+    // Regular users - load their retailer's catalog
+    if (!user.retailerId) {
       return NextResponse.json(
-        { error: 'No retailer selected' },
+        { error: 'No retailer associated with account' },
         { status: 400 }
       );
     }
 
     // Get retailer's case price
     const retailer = await prisma.retailer.findUnique({
-      where: { id: retailerId },
+      where: { id: user.retailerId },
       select: { casePrice: true },
     });
 
     const retailerSkus = await prisma.retailerSKU.findMany({
       where: {
-        retailerId: retailerId,
+        retailerId: user.retailerId,
         active: true,
         sku: {
           active: true,
