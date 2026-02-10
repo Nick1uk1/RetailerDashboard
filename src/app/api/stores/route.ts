@@ -21,6 +21,7 @@ export async function GET() {
           id: true,
           name: true,
           code: true,
+          paymentTermsDays: true,
         },
         orderBy: {
           name: 'asc',
@@ -64,6 +65,7 @@ export async function GET() {
           id: true,
           name: true,
           code: true,
+          paymentTermsDays: true,
         },
         orderBy: {
           name: 'asc',
@@ -85,6 +87,7 @@ export async function GET() {
         id: userRetailer.id,
         name: userRetailer.name,
         code: userRetailer.code,
+        paymentTermsDays: userRetailer.paymentTermsDays,
       }],
       defaultStoreId: userRetailer.id,
     });

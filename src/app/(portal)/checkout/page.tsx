@@ -21,13 +21,13 @@ interface Store {
   id: string;
   name: string;
   code: string;
+  paymentTermsDays: number;
 }
 
 export default function CheckoutPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [poNumber, setPoNumber] = useState('');
   const [notes, setNotes] = useState('');
-  const [deliveryDate, setDeliveryDate] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<ValidationError[]>([]);
   const [success, setSuccess] = useState(false);
@@ -79,6 +79,10 @@ export default function CheckoutPage() {
 
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
 
+  // Get payment terms for selected store
+  const selectedStore = stores.find(s => s.id === selectedStoreId);
+  const paymentTermsDays = selectedStore?.paymentTermsDays || 30;
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -95,7 +99,6 @@ export default function CheckoutPage() {
           })),
           poNumber: poNumber || undefined,
           notes: notes || undefined,
-          requestedDeliveryDate: deliveryDate || undefined,
           storeRetailerId: selectedStoreId || undefined,
         }),
       });
@@ -126,11 +129,21 @@ export default function CheckoutPage() {
         <h1 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '1rem' }}>
           {isIdempotent ? 'Duplicate Order Detected' : 'Order Submitted Successfully!'}
         </h1>
-        <p style={{ color: 'var(--gray-600)', marginBottom: '1.5rem' }}>
+        <p style={{ color: 'var(--gray-600)', marginBottom: '1rem' }}>
           {isIdempotent
             ? 'You already placed an identical order today. We\'ve linked you to the existing order instead of creating a duplicate.'
             : 'Your order has been placed and is being processed.'}
         </p>
+        <div style={{
+          backgroundColor: 'rgba(127, 176, 105, 0.15)',
+          padding: '1rem',
+          borderRadius: '8px',
+          marginBottom: '1.5rem',
+        }}>
+          <p style={{ color: '#5a8a47', fontWeight: 500, margin: 0 }}>
+            Payment Terms: Net {paymentTermsDays} days from delivery
+          </p>
+        </div>
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
           <button onClick={() => router.push(`/orders/${orderId}`)} className="btn btn-primary">
             View Order
@@ -250,20 +263,6 @@ export default function CheckoutPage() {
           />
         </div>
 
-        <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="deliveryDate" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>
-            Requested Delivery Date (optional)
-          </label>
-          <input
-            type="date"
-            id="deliveryDate"
-            className="input"
-            value={deliveryDate}
-            onChange={(e) => setDeliveryDate(e.target.value)}
-            min={new Date().toISOString().split('T')[0]}
-          />
-        </div>
-
         <div style={{ marginBottom: '1.5rem' }}>
           <label htmlFor="notes" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>
             Order Notes (optional)
@@ -276,6 +275,19 @@ export default function CheckoutPage() {
             rows={3}
             placeholder="Any special instructions for this order"
           />
+        </div>
+
+        {/* Payment Terms Notice */}
+        <div style={{
+          backgroundColor: 'rgba(18, 38, 39, 0.05)',
+          padding: '1rem',
+          borderRadius: '8px',
+          marginBottom: '1.5rem',
+          borderLeft: '4px solid var(--forest)',
+        }}>
+          <p style={{ margin: 0, color: 'var(--forest)', fontWeight: 500 }}>
+            Payment Terms: Net {paymentTermsDays} days from delivery
+          </p>
         </div>
 
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
