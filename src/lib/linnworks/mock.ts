@@ -45,4 +45,13 @@ export class MockLinnworksClient implements LinnworksClient {
     // Return empty - no orders processed in mock
     return [];
   }
+
+  async unparkOrder(pkOrderId: string): Promise<boolean> {
+    logger.info('MOCK: Unparking order', { pkOrderId });
+
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    return true;
+  }
 }
