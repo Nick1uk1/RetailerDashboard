@@ -13,9 +13,30 @@ export async function GET() {
       );
     }
 
+    // Superadmins can see all stores
+    if (user.role === 'SUPERADMIN') {
+      const stores = await prisma.retailer.findMany({
+        where: { active: true },
+        select: {
+          id: true,
+          name: true,
+          code: true,
+        },
+        orderBy: {
+          name: 'asc',
+        },
+      });
+
+      return NextResponse.json({
+        isSuperadmin: true,
+        stores,
+        defaultStoreId: stores[0]?.id || '',
+      });
+    }
+
     if (!user.retailerId) {
       return NextResponse.json(
-        { error: 'Superadmin accounts do not belong to a store' },
+        { error: 'No retailer associated with account' },
         { status: 403 }
       );
     }

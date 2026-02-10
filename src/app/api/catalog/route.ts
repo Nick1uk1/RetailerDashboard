@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth/session';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser();
 
@@ -13,22 +13,39 @@ export async function GET() {
       );
     }
 
-    if (!user.retailerId) {
+    // Determine which retailer to load catalog for
+    let retailerId = user.retailerId;
+
+    // Superadmins can specify which retailer's catalog to view
+    if (user.role === 'SUPERADMIN') {
+      const { searchParams } = new URL(request.url);
+      const requestedRetailerId = searchParams.get('retailerId');
+
+      if (!requestedRetailerId) {
+        return NextResponse.json(
+          { error: 'Please select a store to view catalog' },
+          { status: 400 }
+        );
+      }
+      retailerId = requestedRetailerId;
+    }
+
+    if (!retailerId) {
       return NextResponse.json(
-        { error: 'Superadmin accounts cannot access catalog' },
-        { status: 403 }
+        { error: 'No retailer selected' },
+        { status: 400 }
       );
     }
 
     // Get retailer's case price
     const retailer = await prisma.retailer.findUnique({
-      where: { id: user.retailerId },
+      where: { id: retailerId },
       select: { casePrice: true },
     });
 
     const retailerSkus = await prisma.retailerSKU.findMany({
       where: {
-        retailerId: user.retailerId,
+        retailerId: retailerId,
         active: true,
         sku: {
           active: true,

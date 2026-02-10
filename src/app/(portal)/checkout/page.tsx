@@ -39,6 +39,8 @@ export default function CheckoutPage() {
   const [groupName, setGroupName] = useState('');
   const router = useRouter();
 
+  const [isSuperadmin, setIsSuperadmin] = useState(false);
+
   useEffect(() => {
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
@@ -51,14 +53,26 @@ export default function CheckoutPage() {
       router.push('/catalog');
     }
 
-    // Fetch stores for chain dropdown
+    // Fetch stores for chain dropdown or superadmin
     fetch('/api/stores')
       .then((res) => res.json())
       .then((data) => {
-        setIsChain(data.isChain);
+        setIsSuperadmin(data.isSuperadmin || false);
+        setIsChain(data.isChain || false);
         setStores(data.stores || []);
-        setSelectedStoreId(data.defaultStoreId);
         setGroupName(data.groupName || '');
+
+        // For superadmins, use the store they selected in catalog
+        if (data.isSuperadmin) {
+          const savedStoreId = localStorage.getItem('superadmin_selected_store');
+          if (savedStoreId && data.stores.some((s: Store) => s.id === savedStoreId)) {
+            setSelectedStoreId(savedStoreId);
+          } else {
+            setSelectedStoreId(data.defaultStoreId || data.stores[0]?.id || '');
+          }
+        } else {
+          setSelectedStoreId(data.defaultStoreId);
+        }
       })
       .catch(console.error);
   }, [router]);
@@ -196,10 +210,10 @@ export default function CheckoutPage() {
       <form onSubmit={handleSubmit} className="card">
         <h2 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1rem' }}>Order Details</h2>
 
-        {isChain && stores.length > 1 && (
+        {(isSuperadmin || (isChain && stores.length > 1)) && (
           <div style={{ marginBottom: '1rem' }}>
             <label htmlFor="store" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>
-              Select Store ({groupName})
+              {isSuperadmin ? 'Order for Store' : `Select Store (${groupName})`}
             </label>
             <select
               id="store"
@@ -210,10 +224,15 @@ export default function CheckoutPage() {
             >
               {stores.map((store) => (
                 <option key={store.id} value={store.id}>
-                  {store.name}
+                  {store.name} {isSuperadmin && `(${store.code})`}
                 </option>
               ))}
             </select>
+            {isSuperadmin && (
+              <p style={{ fontSize: '0.875rem', color: 'var(--gray-500)', marginTop: '0.25rem' }}>
+                Superadmin: placing order on behalf of this store
+              </p>
+            )}
           </div>
         )}
 

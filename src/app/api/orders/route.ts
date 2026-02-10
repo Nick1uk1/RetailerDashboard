@@ -73,21 +73,13 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser();
-    logger.info('Order creation attempt', { userId: user?.id, email: user?.email, retailerId: user?.retailerId });
+    logger.info('Order creation attempt', { userId: user?.id, email: user?.email, retailerId: user?.retailerId, role: user?.role });
 
     if (!user) {
       logger.warn('Order creation failed: unauthorized');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
-      );
-    }
-
-    if (!user.retailerId) {
-      logger.warn('Order creation failed: no retailerId', { userId: user.id, role: user.role });
-      return NextResponse.json(
-        { error: 'Superadmin accounts cannot create orders' },
-        { status: 403 }
       );
     }
 
@@ -103,30 +95,67 @@ export async function POST(request: NextRequest) {
     }
 
     // Determine which retailer to use for the order
-    let orderRetailerId = user.retailerId;
+    let orderRetailerId: string;
 
-    if (storeRetailerId && storeRetailerId !== user.retailerId) {
-      // Verify user can order for this store (same chain)
-      const [userRetailer, targetRetailer] = await Promise.all([
-        prisma.retailer.findUnique({ where: { id: user.retailerId } }),
-        prisma.retailer.findUnique({ where: { id: storeRetailerId } }),
-      ]);
-
-      if (!userRetailer?.groupName || !targetRetailer?.groupName) {
+    // Superadmins can order for any store
+    if (user.role === 'SUPERADMIN') {
+      if (!storeRetailerId) {
         return NextResponse.json(
-          { error: 'Cannot place orders for other stores' },
-          { status: 403 }
+          { error: 'Please select a store to order for' },
+          { status: 400 }
         );
       }
 
-      if (userRetailer.groupName !== targetRetailer.groupName) {
+      // Verify the store exists and is active
+      const targetRetailer = await prisma.retailer.findUnique({
+        where: { id: storeRetailerId },
+      });
+
+      if (!targetRetailer || !targetRetailer.active) {
         return NextResponse.json(
-          { error: 'Store is not in your chain' },
-          { status: 403 }
+          { error: 'Selected store not found or inactive' },
+          { status: 400 }
         );
       }
 
       orderRetailerId = storeRetailerId;
+      logger.info('Superadmin creating order for store', { superadminId: user.id, retailerId: orderRetailerId });
+    } else {
+      // Regular users
+      if (!user.retailerId) {
+        logger.warn('Order creation failed: no retailerId', { userId: user.id, role: user.role });
+        return NextResponse.json(
+          { error: 'Account not associated with a store' },
+          { status: 403 }
+        );
+      }
+
+      orderRetailerId = user.retailerId;
+
+      // Check if ordering for a different store in same chain
+      if (storeRetailerId && storeRetailerId !== user.retailerId) {
+        // Verify user can order for this store (same chain)
+        const [userRetailer, targetRetailer] = await Promise.all([
+          prisma.retailer.findUnique({ where: { id: user.retailerId } }),
+          prisma.retailer.findUnique({ where: { id: storeRetailerId } }),
+        ]);
+
+        if (!userRetailer?.groupName || !targetRetailer?.groupName) {
+          return NextResponse.json(
+            { error: 'Cannot place orders for other stores' },
+            { status: 403 }
+          );
+        }
+
+        if (userRetailer.groupName !== targetRetailer.groupName) {
+          return NextResponse.json(
+            { error: 'Store is not in your chain' },
+            { status: 403 }
+          );
+        }
+
+        orderRetailerId = storeRetailerId;
+      }
     }
 
     const result = await createOrder({
