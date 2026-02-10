@@ -46,6 +46,8 @@ export default function SuperadminUsersPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [filterRetailer, setFilterRetailer] = useState<string>('');
+  const [magicLink, setMagicLink] = useState<string | null>(null);
+  const [generatingLink, setGeneratingLink] = useState<string | null>(null);
 
   async function loadData() {
     try {
@@ -151,6 +153,28 @@ export default function SuperadminUsersPage() {
     }
   }
 
+  async function handleGetLoginLink(user: User) {
+    setGeneratingLink(user.id);
+    setMagicLink(null);
+    try {
+      const res = await fetch('/api/admin/generate-magic-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMagicLink(data.magicLink);
+      } else {
+        setMessage({ text: data.error || 'Failed to generate link', type: 'error' });
+      }
+    } catch (err) {
+      setMessage({ text: 'Failed to generate link', type: 'error' });
+    } finally {
+      setGeneratingLink(null);
+    }
+  }
+
   const filteredUsers = filterRetailer
     ? users.filter((u) => u.retailer?.id === filterRetailer)
     : users;
@@ -183,6 +207,49 @@ export default function SuperadminUsersPage() {
           <p style={{ color: message.type === 'success' ? '#166534' : '#991b1b' }}>
             {message.text}
           </p>
+        </div>
+      )}
+
+      {magicLink && (
+        <div
+          className="card"
+          style={{
+            backgroundColor: '#dbeafe',
+            marginBottom: '1rem',
+            padding: '1rem',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <strong style={{ color: '#1e40af' }}>Login Link Generated</strong>
+            <button
+              onClick={() => setMagicLink(null)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.25rem' }}
+            >
+              ×
+            </button>
+          </div>
+          <input
+            type="text"
+            value={magicLink}
+            readOnly
+            className="input"
+            style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}
+            onClick={(e) => (e.target as HTMLInputElement).select()}
+          />
+          <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }}>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(magicLink);
+                setMessage({ text: 'Link copied to clipboard', type: 'success' });
+              }}
+              className="btn btn-primary btn-sm"
+            >
+              Copy Link
+            </button>
+            <a href={magicLink} target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-sm">
+              Open in New Tab
+            </a>
+          </div>
         </div>
       )}
 
@@ -319,10 +386,20 @@ export default function SuperadminUsersPage() {
                   </span>
                 </td>
                 <td>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                     <button onClick={() => handleEdit(user)} className="btn btn-primary btn-sm">
                       Edit
                     </button>
+                    {user.active && (
+                      <button
+                        onClick={() => handleGetLoginLink(user)}
+                        disabled={generatingLink === user.id}
+                        className="btn btn-secondary btn-sm"
+                        style={{ whiteSpace: 'nowrap' }}
+                      >
+                        {generatingLink === user.id ? '...' : 'Login Link'}
+                      </button>
+                    )}
                     <button
                       onClick={() => handleToggleActive(user)}
                       className={`btn btn-sm ${user.active ? 'btn-danger' : 'btn-secondary'}`}
