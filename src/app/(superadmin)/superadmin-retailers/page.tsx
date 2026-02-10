@@ -35,14 +35,6 @@ interface ProductRange {
   fullyAssigned: boolean;
 }
 
-const CASE_PRICE_OPTIONS = [
-  { value: '', label: 'Not set' },
-  { value: '19.50', label: '£19.50' },
-  { value: '21.42', label: '£21.42' },
-  { value: '22.80', label: '£22.80' },
-  { value: '23.40', label: '£23.40' },
-  { value: '24.90', label: '£24.90' },
-];
 
 interface FormData {
   name: string;
@@ -316,16 +308,15 @@ export default function SuperadminRetailersPage() {
                 </select>
               </div>
               <div>
-                <label className="label">Case Price</label>
-                <select
+                <label className="label">Case Price (£)</label>
+                <input
+                  type="number"
+                  step="0.01"
                   className="input"
                   value={formData.casePrice}
                   onChange={(e) => setFormData({ ...formData, casePrice: e.target.value })}
-                >
-                  {CASE_PRICE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
+                  placeholder="e.g. 23.40"
+                />
               </div>
               <div>
                 <label className="label">Address</label>
