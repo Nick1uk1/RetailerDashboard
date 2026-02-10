@@ -16,6 +16,14 @@ export async function GET() {
       include: {
         skus: {
           where: { active: true },
+          select: {
+            id: true,
+            skuCode: true,
+            name: true,
+            basePrice: true,
+            packSize: true,
+            imageUrl: true,
+          },
           orderBy: { skuCode: 'asc' },
         },
       },
@@ -25,10 +33,32 @@ export async function GET() {
     // Also get SKUs without a range
     const unassignedSkus = await prisma.sKU.findMany({
       where: { active: true, rangeId: null },
+      select: {
+        id: true,
+        skuCode: true,
+        name: true,
+        basePrice: true,
+        packSize: true,
+        imageUrl: true,
+      },
       orderBy: { skuCode: 'asc' },
     });
 
-    return NextResponse.json({ ranges, unassignedSkus });
+    // Convert Decimal to number for JSON serialization
+    const rangesWithPrices = ranges.map(r => ({
+      ...r,
+      skus: r.skus.map(s => ({
+        ...s,
+        basePrice: Number(s.basePrice),
+      })),
+    }));
+
+    const unassignedWithPrices = unassignedSkus.map(s => ({
+      ...s,
+      basePrice: Number(s.basePrice),
+    }));
+
+    return NextResponse.json({ ranges: rangesWithPrices, unassignedSkus: unassignedWithPrices });
   } catch (error) {
     console.error('SKUs list error:', error);
     return NextResponse.json({ error: 'Failed to load SKUs' }, { status: 500 });

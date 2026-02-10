@@ -7,6 +7,7 @@ interface SKU {
   id: string;
   skuCode: string;
   name: string;
+  basePrice: number;
   packSize: number;
   imageUrl: string | null;
 }
@@ -42,6 +43,8 @@ export default function SuperadminSKUsPage() {
   const [retailerRanges, setRetailerRanges] = useState<RetailerRange[]>([]);
   const [loadingRanges, setLoadingRanges] = useState(false);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [editingPrice, setEditingPrice] = useState<string | null>(null);
+  const [priceInput, setPriceInput] = useState<string>('');
 
   useEffect(() => {
     loadData();
@@ -90,6 +93,32 @@ export default function SuperadminSKUsPage() {
       console.error('Failed to load retailer ranges:', err);
     } finally {
       setLoadingRanges(false);
+    }
+  }
+
+  async function handlePriceUpdate(skuId: string, newPrice: number) {
+    setUpdating(skuId);
+    try {
+      const res = await fetch(`/api/superadmin/skus/${skuId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ basePrice: newPrice }),
+      });
+
+      if (res.ok) {
+        // Update local state
+        setRanges(ranges.map(range => ({
+          ...range,
+          skus: range.skus.map(sku =>
+            sku.id === skuId ? { ...sku, basePrice: newPrice } : sku
+          ),
+        })));
+      }
+    } catch (err) {
+      console.error('Failed to update price:', err);
+    } finally {
+      setUpdating(null);
+      setEditingPrice(null);
     }
   }
 
@@ -300,6 +329,85 @@ export default function SuperadminSKUsPage() {
                     marginTop: '0.25rem',
                   }}>
                     Case of {sku.packSize}
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    marginTop: '0.5rem',
+                  }}>
+                    {editingPrice === sku.id ? (
+                      <>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={priceInput}
+                          onChange={(e) => setPriceInput(e.target.value)}
+                          style={{
+                            width: '80px',
+                            padding: '0.25rem 0.5rem',
+                            border: '1px solid var(--gray-300)',
+                            borderRadius: '4px',
+                            fontSize: '0.875rem',
+                          }}
+                          autoFocus
+                        />
+                        <button
+                          onClick={() => handlePriceUpdate(sku.id, parseFloat(priceInput))}
+                          disabled={updating === sku.id}
+                          style={{
+                            padding: '0.25rem 0.5rem',
+                            fontSize: '0.75rem',
+                            backgroundColor: 'var(--sage)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => setEditingPrice(null)}
+                          style={{
+                            padding: '0.25rem 0.5rem',
+                            fontSize: '0.75rem',
+                            backgroundColor: 'var(--gray-200)',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <span style={{
+                          fontWeight: 600,
+                          color: 'var(--forest)',
+                        }}>
+                          {sku.basePrice > 0 ? `£${(sku.basePrice * sku.packSize).toFixed(2)}/case` : 'No price set'}
+                        </span>
+                        <button
+                          onClick={() => {
+                            setEditingPrice(sku.id);
+                            setPriceInput(sku.basePrice.toFixed(2));
+                          }}
+                          style={{
+                            padding: '0.125rem 0.375rem',
+                            fontSize: '0.625rem',
+                            backgroundColor: 'transparent',
+                            border: '1px solid var(--gray-300)',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            color: 'var(--gray-500)',
+                          }}
+                        >
+                          Edit
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
