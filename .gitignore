@@ -22,6 +22,18 @@ yarn-error.log*
 .env.production.local
 vercel.env
 
+# Test scripts
+check-*.js
+get-*.js
+list-*.js
+test-*.js
+fetch-*.js
+search-*.js
+send-*.js
+sync-*.js
+update-*.js
+remove-*.py
+
 # Vercel
 .vercel
 
