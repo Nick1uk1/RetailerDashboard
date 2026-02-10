@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Determine redirect based on role
-    const redirectTo = user.role === 'SUPERADMIN' ? '/superadmin-retailers' : '/catalog';
+    const redirectTo = user.role === 'SUPERADMIN' ? '/superadmin-order' : '/catalog';
 
     return NextResponse.json({
       success: true,

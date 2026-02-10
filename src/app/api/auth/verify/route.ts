@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     if (!user?.passwordHash) {
       redirectTo = '/setup-password';
     } else if (user?.role === 'SUPERADMIN') {
-      redirectTo = '/superadmin-retailers';
+      redirectTo = '/superadmin-order';
     } else {
       redirectTo = '/catalog';
     }
