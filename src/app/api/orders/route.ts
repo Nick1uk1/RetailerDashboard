@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth/session';
 import { createOrder } from '@/lib/orders/service';
+import { logger } from '@/lib/utils/logging';
 
 export async function GET() {
   try {
@@ -72,8 +73,10 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser();
+    logger.info('Order creation attempt', { userId: user?.id, email: user?.email, retailerId: user?.retailerId });
 
     if (!user) {
+      logger.warn('Order creation failed: unauthorized');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -81,6 +84,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!user.retailerId) {
+      logger.warn('Order creation failed: no retailerId', { userId: user.id, role: user.role });
       return NextResponse.json(
         { error: 'Superadmin accounts cannot create orders' },
         { status: 403 }
@@ -89,6 +93,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { lines, poNumber, notes, requestedDeliveryDate, storeRetailerId } = body;
+    logger.info('Order payload received', { lineCount: lines?.length, poNumber, storeRetailerId });
 
     if (!lines || !Array.isArray(lines) || lines.length === 0) {
       return NextResponse.json(
@@ -133,18 +138,24 @@ export async function POST(request: NextRequest) {
     });
 
     if (!result.success) {
+      logger.warn('Order validation failed', { errors: result.errors });
       return NextResponse.json(
         { errors: result.errors },
         { status: 400 }
       );
     }
 
+    logger.info('Order creation successful', {
+      orderId: result.order?.id,
+      isIdempotent: result.isIdempotent,
+    });
+
     return NextResponse.json({
       order: result.order,
       isIdempotent: result.isIdempotent,
     });
   } catch (error) {
-    console.error('Order creation error:', error);
+    logger.error('Order creation error', error as Error);
     return NextResponse.json(
       { error: 'Failed to create order' },
       { status: 500 }

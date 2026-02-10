@@ -81,6 +81,45 @@ export class RealLinnworksClient implements LinnworksClient {
     return this.createOrdersWithRetry(orders, false);
   }
 
+  async unparkOrder(pkOrderId: string): Promise<boolean> {
+    const auth = await getAuthToken();
+
+    // Try to move order from parked to open orders
+    // Linnworks uses SetOrderGeneralInfo to update the Locked (parked) status
+    const url = `${auth.server}/api/Orders/SetOrderGeneralInfo`;
+
+    const params = new URLSearchParams({
+      orderId: pkOrderId,
+      info: JSON.stringify({
+        Locked: false,
+        HoldOrCancel: false,
+      }),
+    });
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': auth.token,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: params.toString(),
+      });
+
+      if (response.ok) {
+        logger.info(`Order ${pkOrderId} unparked successfully`);
+        return true;
+      } else {
+        const text = await response.text();
+        logger.warn(`Failed to unpark order ${pkOrderId}`, { status: response.status, response: text });
+        return false;
+      }
+    } catch (err) {
+      logger.error(`Error unparking order ${pkOrderId}`, err as Error);
+      return false;
+    }
+  }
+
   async getOrdersById(pkOrderIds: string[]): Promise<LinnworksOrderInfo[]> {
     if (pkOrderIds.length === 0) return [];
 
@@ -212,6 +251,7 @@ export class RealLinnworksClient implements LinnworksClient {
     logger.info('Sending orders to Linnworks', {
       orderCount: orders.length,
       references: orders.map(o => o.ReferenceNumber),
+      payload: JSON.stringify(orders, null, 2),
     });
 
     const params = new URLSearchParams({

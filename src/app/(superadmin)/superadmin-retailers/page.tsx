@@ -26,6 +26,15 @@ interface Retailer {
   };
 }
 
+interface ProductRange {
+  id: string;
+  name: string;
+  description: string | null;
+  totalSkus: number;
+  assignedSkus: number;
+  fullyAssigned: boolean;
+}
+
 const CASE_PRICE_OPTIONS = [
   { value: '', label: 'Not set' },
   { value: '19.50', label: '£19.50' },
@@ -68,6 +77,9 @@ export default function SuperadminRetailersPage() {
   const [formData, setFormData] = useState<FormData>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [productRanges, setProductRanges] = useState<ProductRange[]>([]);
+  const [loadingRanges, setLoadingRanges] = useState(false);
+  const [togglingRange, setTogglingRange] = useState<string | null>(null);
 
   async function loadRetailers() {
     try {
@@ -90,6 +102,43 @@ export default function SuperadminRetailersPage() {
     loadRetailers();
   }, []);
 
+  async function loadRetailerRanges(retailerId: string) {
+    setLoadingRanges(true);
+    try {
+      const res = await fetch(`/api/superadmin/retailers/${retailerId}/ranges`);
+      const data = await res.json();
+      if (res.ok) {
+        setProductRanges(data.ranges);
+      }
+    } catch (err) {
+      console.error('Failed to load retailer ranges:', err);
+    } finally {
+      setLoadingRanges(false);
+    }
+  }
+
+  async function handleRangeToggle(rangeId: string, currentlyAssigned: boolean) {
+    if (!editingId) return;
+    setTogglingRange(rangeId);
+    try {
+      const res = await fetch(`/api/superadmin/retailers/${editingId}/ranges`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rangeId,
+          action: currentlyAssigned ? 'unassign' : 'assign',
+        }),
+      });
+      if (res.ok) {
+        loadRetailerRanges(editingId);
+      }
+    } catch (err) {
+      console.error('Failed to toggle range:', err);
+    } finally {
+      setTogglingRange(null);
+    }
+  }
+
   function handleEdit(retailer: Retailer) {
     setEditingId(retailer.id);
     setFormData({
@@ -104,11 +153,13 @@ export default function SuperadminRetailersPage() {
       phone: retailer.phone || '',
     });
     setShowForm(true);
+    loadRetailerRanges(retailer.id);
   }
 
   function handleNew() {
     setEditingId(null);
     setFormData(emptyForm);
+    setProductRanges([]);
     setShowForm(true);
   }
 
@@ -116,6 +167,7 @@ export default function SuperadminRetailersPage() {
     setShowForm(false);
     setEditingId(null);
     setFormData(emptyForm);
+    setProductRanges([]);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -299,7 +351,65 @@ export default function SuperadminRetailersPage() {
                 />
               </div>
             </div>
-            <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
+
+            {/* Product Ranges - only show when editing */}
+            {editingId && (
+              <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--gray-200)' }}>
+                <label className="label" style={{ marginBottom: '0.75rem', display: 'block' }}>
+                  Product Ranges
+                </label>
+                {loadingRanges ? (
+                  <div style={{ color: 'var(--gray-500)', fontSize: '0.875rem' }}>Loading ranges...</div>
+                ) : (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+                    {productRanges.map((range) => (
+                      <div
+                        key={range.id}
+                        onClick={() => handleRangeToggle(range.id, range.fullyAssigned)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          padding: '0.5rem 1rem',
+                          borderRadius: '8px',
+                          cursor: togglingRange === range.id ? 'wait' : 'pointer',
+                          backgroundColor: range.fullyAssigned ? 'var(--sage)' : 'var(--gray-100)',
+                          color: range.fullyAssigned ? 'white' : 'var(--gray-700)',
+                          border: range.fullyAssigned ? '2px solid var(--sage)' : '2px solid var(--gray-200)',
+                          transition: 'all 0.2s',
+                          opacity: togglingRange === range.id ? 0.6 : 1,
+                        }}
+                      >
+                        <span style={{
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '4px',
+                          backgroundColor: range.fullyAssigned ? 'white' : 'transparent',
+                          border: range.fullyAssigned ? 'none' : '2px solid var(--gray-400)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '12px',
+                          color: 'var(--sage)',
+                          fontWeight: 700,
+                        }}>
+                          {range.fullyAssigned && '✓'}
+                        </span>
+                        <span style={{ fontWeight: 500 }}>{range.name}</span>
+                        <span style={{
+                          fontSize: '0.75rem',
+                          opacity: 0.7,
+                        }}>
+                          ({range.totalSkus} SKUs)
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.5rem' }}>
               <button type="submit" className="btn btn-primary" disabled={saving}>
                 {saving ? 'Saving...' : 'Save'}
               </button>

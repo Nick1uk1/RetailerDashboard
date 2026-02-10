@@ -35,7 +35,11 @@ export async function GET() {
         },
       },
       include: {
-        sku: true,
+        sku: {
+          include: {
+            range: true,
+          },
+        },
       },
       orderBy: {
         sku: {
@@ -60,6 +64,8 @@ export async function GET() {
         packSize: rs.sku.packSize,
         unitOfMeasure: rs.sku.unitOfMeasure,
         imageUrl: rs.sku.imageUrl,
+        rangeName: rs.sku.range?.name || 'Other',
+        rangeId: rs.sku.rangeId,
       };
     });
 

@@ -54,9 +54,14 @@ export interface LinnworksOrderPayload {
   PaymentStatus?: string;
   PaidAmount?: number;
   Locked?: boolean; // false = not parked
+  HoldOrCancel?: boolean; // false = don't hold
   Status?: number; // 0 = unpaid/open
   MatchPaymentMethodTag?: string;
   MatchPostalServiceTag?: string;
+  PostalServiceId?: string;
+  PaymentMethodId?: string;
+  Site?: string;
+  AutomaticallyLinkBySKU?: boolean;
 }
 
 export interface CreateOrderResult {
@@ -79,4 +84,5 @@ export interface LinnworksClient {
   createOrders(orders: LinnworksOrderPayload[]): Promise<CreateOrderResult[]>;
   getOrdersById(pkOrderIds: string[]): Promise<LinnworksOrderInfo[]>;
   getProcessedOrderIds(pkOrderIds: string[]): Promise<string[]>;
+  unparkOrder(pkOrderId: string): Promise<boolean>;
 }

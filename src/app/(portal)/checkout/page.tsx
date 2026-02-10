@@ -32,6 +32,7 @@ export default function CheckoutPage() {
   const [errors, setErrors] = useState<ValidationError[]>([]);
   const [success, setSuccess] = useState(false);
   const [orderId, setOrderId] = useState('');
+  const [isIdempotent, setIsIdempotent] = useState(false);
   const [isChain, setIsChain] = useState(false);
   const [stores, setStores] = useState<Store[]>([]);
   const [selectedStoreId, setSelectedStoreId] = useState('');
@@ -90,6 +91,7 @@ export default function CheckoutPage() {
       if (res.ok) {
         setSuccess(true);
         setOrderId(data.order.id);
+        setIsIdempotent(data.isIdempotent || false);
         localStorage.removeItem('cart');
       } else if (data.errors) {
         setErrors(data.errors);
@@ -106,12 +108,14 @@ export default function CheckoutPage() {
   if (success) {
     return (
       <div className="card" style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
-        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>&#10003;</div>
+        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>{isIdempotent ? '⚠️' : '✓'}</div>
         <h1 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '1rem' }}>
-          Order Submitted Successfully!
+          {isIdempotent ? 'Duplicate Order Detected' : 'Order Submitted Successfully!'}
         </h1>
         <p style={{ color: 'var(--gray-600)', marginBottom: '1.5rem' }}>
-          Your order has been placed and is being processed.
+          {isIdempotent
+            ? 'You already placed an identical order today. We\'ve linked you to the existing order instead of creating a duplicate.'
+            : 'Your order has been placed and is being processed.'}
         </p>
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
           <button onClick={() => router.push(`/orders/${orderId}`)} className="btn btn-primary">
@@ -174,8 +178,14 @@ export default function CheckoutPage() {
             </tr>
             {cartTotal < 250 && (
               <tr>
-                <td colSpan={5} style={{ color: '#dc2626', fontSize: '0.875rem' }}>
-                  Minimum order value is £250.00 (£{(250 - cartTotal).toFixed(2)} more needed)
+                <td colSpan={5} style={{
+                  color: '#991b1b',
+                  fontSize: '0.875rem',
+                  backgroundColor: '#fee2e2',
+                  padding: '0.75rem',
+                  fontWeight: 600,
+                }}>
+                  ⚠️ Minimum order value is £250.00 (£{(250 - cartTotal).toFixed(2)} more needed)
                 </td>
               </tr>
             )}
@@ -249,13 +259,23 @@ export default function CheckoutPage() {
           />
         </div>
 
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <button type="submit" className="btn btn-primary" disabled={loading}>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={loading || cartTotal < 250}
+            title={cartTotal < 250 ? 'Minimum order value is £250' : undefined}
+          >
             {loading ? 'Submitting...' : 'Submit Order'}
           </button>
           <button type="button" onClick={() => router.push('/catalog')} className="btn btn-secondary">
             Back to Catalog
           </button>
+          {cartTotal < 250 && (
+            <span style={{ color: '#991b1b', fontSize: '0.875rem', fontWeight: 500 }}>
+              Add more items to reach £250 minimum
+            </span>
+          )}
         </div>
       </form>
     </div>

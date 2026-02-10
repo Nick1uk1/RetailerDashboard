@@ -12,6 +12,8 @@ interface CatalogItem {
   packSize: number;
   unitOfMeasure: string;
   imageUrl?: string;
+  rangeName?: string;
+  rangeId?: string;
 }
 
 interface CartItem extends CatalogItem {
@@ -156,83 +158,120 @@ export default function CatalogPage() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '2rem' }}>
-        {/* Product Grid */}
+        {/* Product Grid - Grouped by Range */}
         <div>
-          <div className="product-grid">
-            {catalog.map((item) => {
-              const casePrice = Number(item.price) * item.packSize;
-              const inCart = getCartQty(item.skuCode);
+          {(() => {
+            // Group catalog items by range
+            const rangeGroups = catalog.reduce((acc, item) => {
+              const rangeName = item.rangeName || 'Other';
+              if (!acc[rangeName]) acc[rangeName] = [];
+              acc[rangeName].push(item);
+              return acc;
+            }, {} as Record<string, CatalogItem[]>);
 
-              return (
-                <div key={item.id} className="product-card">
-                  <div className="product-image">
-                    {item.imageUrl ? (
-                      <img
-                        src={item.imageUrl}
-                        alt={item.name}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <div style={{
-                        width: '100%',
-                        height: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '3rem',
-                        opacity: 0.3
-                      }}>
-                        🍽️
-                      </div>
-                    )}
-                  </div>
-                  <div className="product-info">
-                    <div className="product-sku">{item.skuCode}</div>
-                    <div className="product-name">{item.name}</div>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginTop: '0.75rem' }}>
-                      <span className="product-price">&pound;{casePrice.toFixed(2)}</span>
-                      <span className="product-pack">per case of {item.packSize}</span>
-                    </div>
-
-                    {inCart > 0 ? (
-                      <div className="qty-control">
-                        <button
-                          className="qty-btn"
-                          onClick={() => updateQty(item.skuCode, (inCart - 1) * item.packSize)}
-                        >
-                          -
-                        </button>
-                        <input
-                          type="number"
-                          value={inCart}
-                          onChange={(e) => updateQty(item.skuCode, (parseInt(e.target.value) || 0) * item.packSize)}
-                          className="qty-input"
-                          min={0}
-                        />
-                        <button
-                          className="qty-btn"
-                          onClick={() => updateQty(item.skuCode, (inCart + 1) * item.packSize)}
-                        >
-                          +
-                        </button>
-                        <span style={{ fontSize: '0.8125rem', color: 'var(--gray-500)', marginLeft: '0.25rem' }}>
-                          cases
-                        </span>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => addToCart(item)}
-                        className="btn btn-primary"
-                        style={{ width: '100%', marginTop: '0.75rem' }}
-                      >
-                        Add to Order
-                      </button>
-                    )}
-                  </div>
+            return Object.entries(rangeGroups).map(([rangeName, items]) => (
+              <div key={rangeName} style={{ marginBottom: '2rem' }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  marginBottom: '1rem',
+                  padding: '0.75rem 1rem',
+                  backgroundColor: 'var(--teal)',
+                  borderRadius: '8px',
+                  color: 'white',
+                }}>
+                  <h2 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>
+                    {rangeName}
+                  </h2>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    padding: '0.125rem 0.5rem',
+                    backgroundColor: 'rgba(255,255,255,0.2)',
+                    borderRadius: '4px',
+                  }}>
+                    {items.length} products
+                  </span>
                 </div>
-              );
-            })}
-          </div>
+
+                <div className="product-grid">
+                  {items.map((item) => {
+                    const casePrice = Number(item.price) * item.packSize;
+                    const inCart = getCartQty(item.skuCode);
+
+                    return (
+                      <div key={item.id} className="product-card">
+                        <div className="product-image">
+                          {item.imageUrl ? (
+                            <img
+                              src={item.imageUrl}
+                              alt={item.name}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                          ) : (
+                            <div style={{
+                              width: '100%',
+                              height: '100%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '3rem',
+                              opacity: 0.3
+                            }}>
+                              🍽️
+                            </div>
+                          )}
+                        </div>
+                        <div className="product-info">
+                          <div className="product-sku">{item.skuCode}</div>
+                          <div className="product-name">{item.name}</div>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginTop: '0.75rem' }}>
+                            <span className="product-price">&pound;{casePrice.toFixed(2)}</span>
+                            <span className="product-pack">per case of {item.packSize}</span>
+                          </div>
+
+                          {inCart > 0 ? (
+                            <div className="qty-control">
+                              <button
+                                className="qty-btn"
+                                onClick={() => updateQty(item.skuCode, (inCart - 1) * item.packSize)}
+                              >
+                                -
+                              </button>
+                              <input
+                                type="number"
+                                value={inCart}
+                                onChange={(e) => updateQty(item.skuCode, (parseInt(e.target.value) || 0) * item.packSize)}
+                                className="qty-input"
+                                min={0}
+                              />
+                              <button
+                                className="qty-btn"
+                                onClick={() => updateQty(item.skuCode, (inCart + 1) * item.packSize)}
+                              >
+                                +
+                              </button>
+                              <span style={{ fontSize: '0.8125rem', color: 'var(--gray-500)', marginLeft: '0.25rem' }}>
+                                cases
+                              </span>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => addToCart(item)}
+                              className="btn btn-primary"
+                              style={{ width: '100%', marginTop: '0.75rem' }}
+                            >
+                              Add to Order
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ));
+          })()}
         </div>
 
         {/* Cart Sidebar */}

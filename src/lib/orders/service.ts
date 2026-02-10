@@ -225,6 +225,16 @@ export async function syncOrderToLinnworks(orderId: string): Promise<void> {
         orderId,
         pkOrderId: result.pkOrderId,
       });
+
+      // Explicitly unpark the order to ensure it's not in parked queue
+      try {
+        await client.unparkOrder(result.pkOrderId);
+      } catch (unparkError) {
+        logger.warn('Failed to unpark order, may need manual intervention', {
+          orderId,
+          pkOrderId: result.pkOrderId,
+        });
+      }
     } else {
       throw new Error(result.error || 'Linnworks returned no order ID');
     }
