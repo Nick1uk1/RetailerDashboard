@@ -57,7 +57,7 @@ export function getConfig(): AppConfig {
     orderUnits,
     magicLinkExpiryMinutes: parseInt(getEnvVar('MAGIC_LINK_EXPIRY_MINUTES', '15'), 10),
     sessionExpiryDays: parseInt(getEnvVar('SESSION_EXPIRY_DAYS', '7'), 10),
-    appUrl: getEnvVar('NEXT_PUBLIC_APP_URL', 'http://localhost:3000'),
+    appUrl: getEnvVar('NEXT_PUBLIC_APP_URL', 'http://localhost:3000').trim(),
     isLinnworksMocked,
     minimumOrderValue: parseFloat(getEnvVar('MINIMUM_ORDER_VALUE', '250')),
   };
