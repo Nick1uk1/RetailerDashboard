@@ -187,8 +187,10 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     logger.error('Order creation error', error as Error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Order creation error details:', errorMessage);
     return NextResponse.json(
-      { error: 'Failed to create order' },
+      { error: `Failed to create order: ${errorMessage}` },
       { status: 500 }
     );
   }
