@@ -11,9 +11,11 @@ export async function POST() {
     const cookieStore = await cookies();
     const superadminEmail = cookieStore.get('superadmin_return_email')?.value;
 
+    console.log('[Exit Store] Cookie value:', superadminEmail);
+
     if (!superadminEmail) {
       return NextResponse.json(
-        { error: 'No superadmin session to return to' },
+        { error: 'No superadmin session to return to. Please log in again.' },
         { status: 400 }
       );
     }
@@ -23,13 +25,16 @@ export async function POST() {
       where: { email: superadminEmail },
     });
 
+    console.log('[Exit Store] Found user:', superadmin?.email, 'Role:', superadmin?.role);
+
     if (!superadmin || superadmin.role !== 'SUPERADMIN' || !superadmin.active) {
       // Clear invalid cookie
-      cookieStore.delete('superadmin_return_email');
-      return NextResponse.json(
-        { error: 'Invalid superadmin session' },
+      const response = NextResponse.json(
+        { error: 'Invalid superadmin session. Please log in again.' },
         { status: 400 }
       );
+      response.cookies.delete('superadmin_return_email');
+      return response;
     }
 
     // Generate magic link token for superadmin
@@ -45,15 +50,22 @@ export async function POST() {
       },
     });
 
-    // Clear the return cookie
-    cookieStore.delete('superadmin_return_email');
+    console.log('[Exit Store] Created magic link for:', superadminEmail);
 
+    // Clear the return cookie and redirect
     const verifyUrl = `${cfg.appUrl}/verify?token=${token}`;
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       redirectUrl: verifyUrl,
+      _debug: {
+        returningTo: superadminEmail,
+      },
     });
+
+    response.cookies.delete('superadmin_return_email');
+
+    return response;
   } catch (error) {
     console.error('Exit store error:', error);
     return NextResponse.json(
@@ -71,6 +83,9 @@ export async function GET() {
 
     return NextResponse.json({
       canExitStore: !!superadminEmail,
+      _debug: {
+        cookieValue: superadminEmail || null,
+      },
     });
   } catch {
     return NextResponse.json({ canExitStore: false });

@@ -4,7 +4,6 @@ import { randomBytes } from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { config } from '@/lib/config';
 import { requireSuperadmin } from '@/lib/auth/session';
-import { cookies } from 'next/headers';
 
 // Admin endpoint to generate magic links for testing store logins
 // Only accessible by superadmins
@@ -49,24 +48,34 @@ export async function POST(request: NextRequest) {
 
     const magicLink = `${cfg.appUrl}/verify?token=${token}`;
 
-    // Store superadmin email in cookie so they can return to their account
-    const cookieStore = await cookies();
-    cookieStore.set('superadmin_return_email', superadmin.email, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24, // 24 hours
-      path: '/',
-    });
-
-    return NextResponse.json({
+    // Create response
+    const response = NextResponse.json({
       success: true,
       email,
       userName: user.name,
       retailerName: user.retailer?.name || 'N/A (Superadmin)',
       magicLink,
       expiresAt: expiresAt.toISOString(),
+      // Debug info
+      _debug: {
+        superadminEmail: superadmin.email,
+        targetEmail: email,
+      },
     });
+
+    // Store superadmin email in cookie so they can return to their account
+    // Only set if logging into a different user
+    if (email !== superadmin.email) {
+      response.cookies.set('superadmin_return_email', superadmin.email, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24, // 24 hours
+        path: '/',
+      });
+    }
+
+    return response;
   } catch (error) {
     if (error instanceof Error) {
       if (error.message === 'Unauthorized' || error.message === 'Forbidden') {
