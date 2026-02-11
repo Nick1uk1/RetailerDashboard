@@ -29,6 +29,7 @@ interface Order {
   status: string;
   totalAmount: number;
   createdAt: string;
+  deliveredAt: string | null;
   lines: OrderLine[];
   linnworksMap: { pkOrderId: string } | null;
   events: OrderEvent[];
@@ -36,6 +37,22 @@ interface Order {
     name: string;
     code: string;
   };
+}
+
+interface AffectedItem {
+  skuCode: string;
+  skuName: string;
+  units: number;
+}
+
+interface CreditRequest {
+  id: string;
+  description: string;
+  affectedItems: AffectedItem[];
+  photoUrls: string[];
+  status: string;
+  creditAmount: number | null;
+  createdAt: string;
 }
 
 // Status flow: SUBMITTED -> CREATED_IN_LINNWORKS -> PROCESSING -> SHIPPED
@@ -207,6 +224,12 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showCreditForm, setShowCreditForm] = useState(false);
+  const [creditRequests, setCreditRequests] = useState<CreditRequest[]>([]);
+  const [submittingCredit, setSubmittingCredit] = useState(false);
+  const [creditDescription, setCreditDescription] = useState('');
+  const [affectedItems, setAffectedItems] = useState<AffectedItem[]>([]);
+  const [photoFiles, setPhotoFiles] = useState<string[]>([]);
 
   useEffect(() => {
     async function loadOrder() {
@@ -227,7 +250,107 @@ export default function OrderDetailPage() {
     }
 
     loadOrder();
+    loadCreditRequests();
   }, [params.id]);
+
+  async function loadCreditRequests() {
+    try {
+      const res = await fetch(`/api/orders/${params.id}/credit-request`);
+      const data = await res.json();
+      if (res.ok) {
+        setCreditRequests(data.creditRequests || []);
+      }
+    } catch (err) {
+      console.error('Failed to load credit requests');
+    }
+  }
+
+  function canRequestCredit(): boolean {
+    if (!order || order.status !== 'DELIVERED') return false;
+    if (!order.deliveredAt) return true; // Allow if delivered but no timestamp
+    const hoursSinceDelivery = (Date.now() - new Date(order.deliveredAt).getTime()) / (1000 * 60 * 60);
+    return hoursSinceDelivery <= 48;
+  }
+
+  function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoFiles(prev => [...prev, reader.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function addAffectedItem() {
+    if (!order) return;
+    setAffectedItems(prev => [...prev, { skuCode: '', skuName: '', units: 1 }]);
+  }
+
+  function updateAffectedItem(index: number, field: keyof AffectedItem, value: string | number) {
+    setAffectedItems(prev => {
+      const updated = [...prev];
+      if (field === 'skuCode' && order) {
+        const line = order.lines.find(l => l.skuCode === value);
+        if (line) {
+          updated[index] = { ...updated[index], skuCode: line.skuCode, skuName: line.skuName };
+        }
+      } else {
+        updated[index] = { ...updated[index], [field]: value };
+      }
+      return updated;
+    });
+  }
+
+  function removeAffectedItem(index: number) {
+    setAffectedItems(prev => prev.filter((_, i) => i !== index));
+  }
+
+  async function handleSubmitCreditRequest() {
+    if (!creditDescription.trim()) {
+      alert('Please describe the issue');
+      return;
+    }
+    if (affectedItems.length === 0) {
+      alert('Please add at least one affected item');
+      return;
+    }
+    if (photoFiles.length === 0) {
+      alert('Please upload at least one photo');
+      return;
+    }
+
+    setSubmittingCredit(true);
+    try {
+      const res = await fetch(`/api/orders/${params.id}/credit-request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          description: creditDescription,
+          affectedItems,
+          photoUrls: photoFiles,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setShowCreditForm(false);
+        setCreditDescription('');
+        setAffectedItems([]);
+        setPhotoFiles([]);
+        loadCreditRequests();
+      } else {
+        alert(data.error || 'Failed to submit credit request');
+      }
+    } catch (err) {
+      alert('Something went wrong');
+    } finally {
+      setSubmittingCredit(false);
+    }
+  }
 
   if (loading) {
     return <div>Loading order...</div>;
@@ -370,6 +493,202 @@ export default function OrderDetailPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Credit Request Section */}
+      {order.status === 'DELIVERED' && (
+        <div className="card" style={{ marginBottom: '1.5rem', padding: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--forest)', margin: 0 }}>
+              Credit Requests
+            </h2>
+            {canRequestCredit() && creditRequests.filter(cr => cr.status === 'PENDING').length === 0 && (
+              <button
+                onClick={() => setShowCreditForm(true)}
+                className="btn btn-secondary btn-sm"
+              >
+                Request Credit
+              </button>
+            )}
+          </div>
+
+          {!canRequestCredit() && creditRequests.length === 0 && (
+            <p style={{ color: 'var(--gray-500)', fontSize: '0.875rem', margin: 0 }}>
+              Credit requests must be submitted within 48 hours of delivery.
+            </p>
+          )}
+
+          {creditRequests.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {creditRequests.map(cr => (
+                <div
+                  key={cr.id}
+                  style={{
+                    padding: '1rem',
+                    backgroundColor: cr.status === 'PENDING' ? 'rgba(212, 168, 84, 0.1)' : cr.status === 'APPROVED' ? 'rgba(127, 176, 105, 0.1)' : 'rgba(220, 53, 69, 0.1)',
+                    borderRadius: '8px',
+                    borderLeft: `4px solid ${cr.status === 'PENDING' ? '#D4A854' : cr.status === 'APPROVED' ? 'var(--sage)' : 'var(--danger)'}`,
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span className={`badge ${cr.status === 'PENDING' ? 'badge-warning' : cr.status === 'APPROVED' ? 'badge-success' : 'badge-danger'}`}>
+                      {cr.status}
+                    </span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>
+                      {new Date(cr.createdAt).toLocaleDateString('en-GB')}
+                    </span>
+                  </div>
+                  <p style={{ margin: '0 0 0.5rem', fontSize: '0.875rem' }}>{cr.description}</p>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--gray-600)' }}>
+                    {cr.affectedItems.reduce((sum, item) => sum + item.units, 0)} units affected across {cr.affectedItems.length} SKU(s)
+                  </div>
+                  {cr.status === 'APPROVED' && cr.creditAmount && (
+                    <div style={{ marginTop: '0.5rem', fontWeight: 600, color: 'var(--sage)' }}>
+                      Credit approved: £{cr.creditAmount.toFixed(2)}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Credit Request Form Modal */}
+      {showCreditForm && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '1rem',
+          }}
+          onClick={() => setShowCreditForm(false)}
+        >
+          <div
+            className="card"
+            style={{ maxWidth: '600px', width: '100%', maxHeight: '90vh', overflow: 'auto' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ color: 'var(--forest)', marginBottom: '0.5rem' }}>Request Credit</h2>
+            <p style={{ color: 'var(--gray-500)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              Report damaged or missing items. Please upload photos as evidence.
+            </p>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <label className="label">Describe the Issue *</label>
+              <textarea
+                className="input"
+                value={creditDescription}
+                onChange={(e) => setCreditDescription(e.target.value)}
+                rows={3}
+                placeholder="Describe what was damaged or missing..."
+              />
+            </div>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <label className="label">Affected Items *</label>
+              {affectedItems.map((item, idx) => (
+                <div key={idx} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <select
+                    className="input"
+                    value={item.skuCode}
+                    onChange={(e) => updateAffectedItem(idx, 'skuCode', e.target.value)}
+                    style={{ flex: 2 }}
+                  >
+                    <option value="">Select SKU...</option>
+                    {order?.lines.map(line => (
+                      <option key={line.skuCode} value={line.skuCode}>
+                        {line.skuCode} - {line.skuName}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="number"
+                    className="input"
+                    value={item.units}
+                    onChange={(e) => updateAffectedItem(idx, 'units', parseInt(e.target.value) || 0)}
+                    min={1}
+                    placeholder="Units"
+                    style={{ width: '100px' }}
+                  />
+                  <button
+                    onClick={() => removeAffectedItem(idx)}
+                    className="btn btn-danger btn-sm"
+                    style={{ padding: '0 0.75rem' }}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              <button onClick={addAffectedItem} className="btn btn-secondary btn-sm">
+                + Add Item
+              </button>
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label className="label">Upload Photos * (required)</label>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handlePhotoUpload}
+                style={{ marginBottom: '0.5rem' }}
+              />
+              {photoFiles.length > 0 && (
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                  {photoFiles.map((photo, idx) => (
+                    <div key={idx} style={{ position: 'relative' }}>
+                      <img
+                        src={photo}
+                        alt={`Upload ${idx + 1}`}
+                        style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px' }}
+                      />
+                      <button
+                        onClick={() => setPhotoFiles(prev => prev.filter((_, i) => i !== idx))}
+                        style={{
+                          position: 'absolute',
+                          top: '-8px',
+                          right: '-8px',
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '50%',
+                          backgroundColor: 'var(--danger)',
+                          color: 'white',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                onClick={handleSubmitCreditRequest}
+                disabled={submittingCredit}
+                className="btn btn-primary"
+              >
+                {submittingCredit ? 'Submitting...' : 'Submit Request'}
+              </button>
+              <button onClick={() => setShowCreditForm(false)} className="btn btn-secondary">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {order.events.length > 0 && (
         <div className="card" style={{ padding: '1.5rem' }}>

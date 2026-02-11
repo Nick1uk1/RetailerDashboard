@@ -63,6 +63,9 @@ export function PortalHeader({ user }: { user: User }) {
                 <Link href="/superadmin-orders" className={isActive('/superadmin-orders') ? 'active' : ''}>
                   All Orders
                 </Link>
+                <Link href="/superadmin-credits" className={isActive('/superadmin-credits') ? 'active' : ''}>
+                  Credits
+                </Link>
                 <span style={{ opacity: 0.3, margin: '0 0.25rem' }}>|</span>
               </>
             )}

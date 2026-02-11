@@ -99,11 +99,30 @@ model Order {
   status                String             @default("SUBMITTED")
   totalAmount           Decimal
   isTest                Boolean            @default(false) // Test orders excluded from reports
+  deliveredAt           DateTime?          // When order was marked as delivered
   createdAt             DateTime           @default(now())
   updatedAt             DateTime           @updatedAt
   lines                 OrderLine[]
   linnworksMap          LinnworksOrderMap?
   events                OrderEventLog[]
+  creditRequests        CreditRequest[]
+}
+
+model CreditRequest {
+  id             String   @id @default(uuid())
+  orderId        String
+  order          Order    @relation(fields: [orderId], references: [id])
+  requestedById  String   // User who submitted the request
+  description    String   // Description of the issue
+  affectedItems  String   // JSON array of {skuCode, skuName, units}
+  photoUrls      String   // JSON array of photo URLs
+  status         String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  resolvedById   String?  // Superadmin who resolved it
+  resolvedAt     DateTime?
+  resolutionNote String?  // Notes about the resolution
+  creditAmount   Decimal? // Approved credit amount
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model OrderLine {
