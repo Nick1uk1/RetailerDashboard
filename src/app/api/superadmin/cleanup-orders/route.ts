@@ -87,9 +87,26 @@ export async function GET() {
       }
     }
 
+    // Also fix Cotswold Fayre order amount
+    const cotswoldOrders = await prisma.order.findMany({
+      where: {
+        retailer: { name: { contains: 'Cotswold', mode: 'insensitive' } },
+      },
+    });
+
+    let orderFixResult = 'No Cotswold orders found';
+    if (cotswoldOrders.length > 0) {
+      await prisma.order.updateMany({
+        where: { id: { in: cotswoldOrders.map(o => o.id) } },
+        data: { totalAmount: 1345.50 },
+      });
+      orderFixResult = `Fixed ${cotswoldOrders.length} Cotswold order(s) to £1345.50`;
+    }
+
     return NextResponse.json({
       success: true,
       message: `Updated ${results.filter(r => r.status === 'updated').length} retailers`,
+      orderFix: orderFixResult,
       results,
     });
   } catch (error) {
