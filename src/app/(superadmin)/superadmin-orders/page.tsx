@@ -258,7 +258,7 @@ export default function SuperadminOrdersPage() {
                 <th>Retailer</th>
                 <th>Order Ref</th>
                 <th>PO Number</th>
-                <th>SKUs</th>
+                <th>Cases</th>
                 <th>Total</th>
                 <th>Status</th>
                 <th>Date</th>
@@ -276,7 +276,7 @@ export default function SuperadminOrdersPage() {
                   </td>
                   <td style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>{order.externalRef}</td>
                   <td>{order.poNumber || <span style={{ color: 'var(--gray-400)' }}>-</span>}</td>
-                  <td>{order.lines.length}</td>
+                  <td>{order.lines.reduce((sum, line) => sum + line.qty, 0)}</td>
                   <td style={{ fontWeight: 600 }}>&pound;{Number(order.totalAmount).toFixed(2)}</td>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
