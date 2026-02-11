@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const magicLink = `${cfg.appUrl}/login?token=${token}`;
+    const magicLink = `${cfg.appUrl}/verify?token=${token}`;
 
     return NextResponse.json({
       success: true,
