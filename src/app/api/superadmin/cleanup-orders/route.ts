@@ -87,7 +87,7 @@ export async function GET() {
       }
     }
 
-    // Also fix Cotswold Fayre order amount
+    // Also fix Cotswold Fayre order amount and status
     const cotswoldOrders = await prisma.order.findMany({
       where: {
         retailer: { name: { contains: 'Cotswold', mode: 'insensitive' } },
@@ -98,9 +98,9 @@ export async function GET() {
     if (cotswoldOrders.length > 0) {
       await prisma.order.updateMany({
         where: { id: { in: cotswoldOrders.map(o => o.id) } },
-        data: { totalAmount: 1345.50 },
+        data: { totalAmount: 1345.50, status: 'PROCESSING' },
       });
-      orderFixResult = `Fixed ${cotswoldOrders.length} Cotswold order(s) to £1345.50`;
+      orderFixResult = `Fixed ${cotswoldOrders.length} Cotswold order(s) to £1345.50 and status PROCESSING`;
     }
 
     return NextResponse.json({
