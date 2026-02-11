@@ -15,7 +15,7 @@ interface Order {
     name: string;
     code: string;
   };
-  lines: { id: string }[];
+  lines: { id: string; qty: number }[];
 }
 
 interface Retailer {
