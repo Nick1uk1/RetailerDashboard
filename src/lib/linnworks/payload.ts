@@ -17,13 +17,20 @@ export function buildLinnworksPayload(order: OrderWithLines): LinnworksOrderPayl
   const taxRate = taxCostInclusive ? 20 : 0;
 
   const orderItems: LinnworksOrderItem[] = order.lines.map((line) => {
+    // Calculate number of cases (qty is stored as total items, divide by packSize for cases)
+    const packSize = line.sku.packSize || 1;
+    const caseQty = Math.round(line.qty / packSize);
+
+    // Price per case (unitPrice is per item, multiply by packSize for case price)
+    const pricePerCase = Number(line.unitPrice) * packSize;
+
     const item: LinnworksOrderItem = {
       ItemNumber: line.skuCode,
       SKU: line.skuCode, // Must match Linnworks inventory SKU exactly (with period for CASE items)
       ChannelSKU: line.skuCode,
       ItemTitle: line.skuName,
-      Qty: line.qty,
-      PricePerUnit: Number(line.unitPrice),
+      Qty: caseQty, // Send number of cases, not individual items
+      PricePerUnit: pricePerCase, // Price per case
       TaxRate: taxRate,
       TaxCostInclusive: taxCostInclusive,
       LinePercentDiscount: 0,
