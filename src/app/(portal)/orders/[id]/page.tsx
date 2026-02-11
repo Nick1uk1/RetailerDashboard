@@ -55,16 +55,15 @@ interface CreditRequest {
   createdAt: string;
 }
 
-// Status flow: SUBMITTED -> CREATED_IN_LINNWORKS -> PROCESSING -> SHIPPED
+// Status flow: SUBMITTED -> CREATED_IN_LINNWORKS -> PROCESSING -> DELIVERED
 const STATUS_STEPS = [
   { key: 'CREATED_IN_LINNWORKS', label: 'Order Placed', icon: '📦' },
   { key: 'PROCESSING', label: 'Processing', icon: '⚙️' },
-  { key: 'SHIPPED', label: 'Shipped', icon: '🚚' },
   { key: 'DELIVERED', label: 'Delivered', icon: '✓' },
 ];
 
 function getStepStatus(orderStatus: string, stepKey: string): 'completed' | 'current' | 'pending' {
-  const statusOrder = ['CREATED_IN_LINNWORKS', 'PROCESSING', 'SHIPPED', 'DELIVERED'];
+  const statusOrder = ['CREATED_IN_LINNWORKS', 'PROCESSING', 'DELIVERED'];
   const currentIndex = statusOrder.indexOf(orderStatus);
   const stepIndex = statusOrder.indexOf(stepKey);
 

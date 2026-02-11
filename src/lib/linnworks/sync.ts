@@ -66,14 +66,14 @@ export async function syncOrderStatuses(): Promise<SyncResult> {
       const linnworksOrder = linnworksOrders.find(lo => lo.pkOrderId === pkOrderId);
       let newStatus: string | null = null;
 
-      // Check if order has been dispatched (processed) - this means SHIPPED
+      // Check if order has been dispatched (processed) - this means PROCESSING
       if (processedSet.has(pkOrderId)) {
-        if (order.status !== 'SHIPPED' && order.status !== 'DELIVERED') {
-          newStatus = 'SHIPPED';
-          logger.info(`Order ${order.externalRef} has been processed in Linnworks → SHIPPED`);
+        if (order.status !== 'PROCESSING' && order.status !== 'DELIVERED') {
+          newStatus = 'PROCESSING';
+          logger.info(`Order ${order.externalRef} has been processed in Linnworks → PROCESSING`);
         }
       }
-      // Check if invoice has been printed (processing)
+      // Check if invoice has been printed (also processing)
       else if (linnworksOrder?.invoicePrinted) {
         if (order.status === 'CREATED_IN_LINNWORKS') {
           newStatus = 'PROCESSING';
@@ -91,7 +91,7 @@ export async function syncOrderStatuses(): Promise<SyncResult> {
           await prisma.orderEventLog.create({
             data: {
               orderId: order.id,
-              eventType: newStatus === 'PROCESSING' ? 'ORDER_PROCESSING' : 'ORDER_SHIPPED',
+              eventType: 'ORDER_PROCESSING',
               payloadJson: JSON.stringify({
                 previousStatus: order.status,
                 newStatus,
