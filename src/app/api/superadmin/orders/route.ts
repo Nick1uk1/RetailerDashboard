@@ -20,6 +20,11 @@ export async function GET() {
           select: {
             id: true,
             qty: true,
+            sku: {
+              select: {
+                packSize: true,
+              },
+            },
           },
         },
       },

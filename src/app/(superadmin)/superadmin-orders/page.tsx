@@ -15,7 +15,7 @@ interface Order {
     name: string;
     code: string;
   };
-  lines: { id: string; qty: number }[];
+  lines: { id: string; qty: number; sku: { packSize: number } }[];
 }
 
 interface Retailer {
@@ -276,7 +276,7 @@ export default function SuperadminOrdersPage() {
                   </td>
                   <td style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>{order.externalRef}</td>
                   <td>{order.poNumber || <span style={{ color: 'var(--gray-400)' }}>-</span>}</td>
-                  <td>{order.lines.reduce((sum, line) => sum + line.qty, 0)}</td>
+                  <td>{order.lines.reduce((sum, line) => sum + (line.qty / (line.sku?.packSize || 1)), 0)}</td>
                   <td style={{ fontWeight: 600 }}>&pound;{Number(order.totalAmount).toFixed(2)}</td>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
