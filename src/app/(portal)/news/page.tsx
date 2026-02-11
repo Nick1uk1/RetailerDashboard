@@ -101,8 +101,8 @@ export default function NewsPage() {
               lineHeight: 1.6,
             }}
           >
-            Your hub for ordering premium, high-protein ready meals.
-            Fresh from our kitchen to your shelves.
+            Delicious, balanced recipes created by independent chefs.
+            Ready to serve, ready to sell.
           </p>
 
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -236,8 +236,8 @@ export default function NewsPage() {
               Full Range Available
             </h3>
             <p style={{ color: 'var(--gray-600)', margin: 0, lineHeight: 1.6 }}>
-              Our complete range of high-protein ready meals is now available to order. From our popular
-              Chicken dishes to hearty Beef options - all freshly prepared and ready to stock your shelves.
+              Our complete range of balanced, chef-crafted ready meals is now available to order.
+              Each recipe developed by independent chefs for great taste and nutrition.
             </p>
           </div>
 
@@ -265,11 +265,11 @@ export default function NewsPage() {
               <span style={{ color: 'var(--gray-500)', fontSize: '0.875rem' }}>Ongoing</span>
             </div>
             <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--forest)', marginBottom: '0.5rem' }}>
-              Minimum Order Value
+              Ordering Information
             </h3>
             <p style={{ color: 'var(--gray-600)', margin: 0, lineHeight: 1.6 }}>
-              Please note our minimum order value is £250. Orders are processed within 24-48 hours
-              and delivered directly to your store.
+              Minimum order values vary by retailer - you'll see yours at checkout.
+              Orders are processed within 24-48 hours and delivered directly to your store.
             </p>
           </div>
         </div>
