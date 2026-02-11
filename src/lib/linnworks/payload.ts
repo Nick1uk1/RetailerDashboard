@@ -69,15 +69,23 @@ export function buildLinnworksPayload(order: OrderWithLines): LinnworksOrderPayl
     AutomaticallyLinkBySKU: true,
   };
 
-  // Add notes as external notes
+  // Add notes as external notes - split into chunks of 20 words max
   if (order.notes) {
-    const externalNote: LinnworksOrderNote = {
-      Note: order.notes,
-      NoteEntryDate: order.createdAt.toISOString(),
-      NoteUserName: 'Retail Portal',
-      IsInternal: false, // External note
-    };
-    payload.Notes = [externalNote];
+    const words = order.notes.split(/\s+/);
+    const notes: LinnworksOrderNote[] = [];
+
+    // Split into chunks of 20 words
+    for (let i = 0; i < words.length; i += 20) {
+      const chunk = words.slice(i, i + 20).join(' ');
+      notes.push({
+        Note: chunk,
+        NoteEntryDate: order.createdAt.toISOString(),
+        NoteUserName: 'Retail Portal',
+        IsInternal: false, // External note
+      });
+    }
+
+    payload.Notes = notes;
   }
 
   // Add delivery and billing address from retailer
