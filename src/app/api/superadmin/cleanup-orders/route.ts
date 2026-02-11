@@ -68,8 +68,39 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    if (action === 'update-amount') {
+      const { retailerName, amount } = body;
+      if (!retailerName || amount === undefined) {
+        return NextResponse.json({ error: 'retailerName and amount required' }, { status: 400 });
+      }
+
+      // Find orders for this retailer
+      const orders = await prisma.order.findMany({
+        where: {
+          retailer: { name: { contains: retailerName, mode: 'insensitive' } },
+        },
+        include: { retailer: { select: { name: true } } },
+      });
+
+      if (orders.length === 0) {
+        return NextResponse.json({ error: `No orders found for retailer: ${retailerName}` }, { status: 404 });
+      }
+
+      // Update all matching orders
+      const updated = await prisma.order.updateMany({
+        where: { id: { in: orders.map(o => o.id) } },
+        data: { totalAmount: amount },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `Updated ${updated.count} order(s) for ${orders[0].retailer.name} to amount ${amount}`,
+        updated: updated.count,
+      });
+    }
+
     return NextResponse.json({
-      error: 'Specify action: "delete-cancelled" or "list-orders"',
+      error: 'Specify action: "delete-cancelled", "list-orders", or "update-amount"',
     }, { status: 400 });
 
   } catch (error) {
