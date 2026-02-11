@@ -181,32 +181,45 @@ export default function NewsPage() {
           <div
             className="card"
             style={{
-              padding: '1.5rem',
+              padding: '0',
               borderLeft: '4px solid #E85D4C',
+              overflow: 'hidden',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-              <span
-                style={{
-                  backgroundColor: 'rgba(232, 93, 76, 0.15)',
-                  color: '#E85D4C',
-                  padding: '0.25rem 0.75rem',
-                  borderRadius: '4px',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                }}
-              >
-                NEW PRODUCT
-              </span>
-              <span style={{ color: 'var(--gray-500)', fontSize: '0.875rem' }}>Feb 2026</span>
+            <img
+              src="/images/bento-lifestyle.jpg"
+              alt="HomeCooks Bento"
+              style={{
+                width: '100%',
+                height: '200px',
+                objectFit: 'cover',
+              }}
+            />
+            <div style={{ padding: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                <span
+                  style={{
+                    backgroundColor: 'rgba(232, 93, 76, 0.15)',
+                    color: '#E85D4C',
+                    padding: '0.25rem 0.75rem',
+                    borderRadius: '4px',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  NEW PRODUCT
+                </span>
+                <span style={{ color: 'var(--gray-500)', fontSize: '0.875rem' }}>Feb 2026</span>
+              </div>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--forest)', marginBottom: '0.5rem' }}>
+                Introducing HomeCooks Bento
+              </h3>
+              <p style={{ color: 'var(--gray-600)', margin: 0, lineHeight: 1.6 }}>
+                We're excited to announce the launch of HomeCooks Bento! UK produced using high welfare ingredients,
+                our new range of perfectly portioned, balanced bento boxes features chef-crafted recipes.
+                Speak to Nick for more information.
+              </p>
             </div>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--forest)', marginBottom: '0.5rem' }}>
-              Introducing HomeCooks Bento
-            </h3>
-            <p style={{ color: 'var(--gray-600)', margin: 0, lineHeight: 1.6 }}>
-              We're excited to announce the launch of HomeCooks Bento! Our new range of perfectly portioned,
-              balanced bento boxes featuring chef-crafted recipes. Available to order now through the catalog.
-            </p>
           </div>
 
           {/* Update Card 1 */}
