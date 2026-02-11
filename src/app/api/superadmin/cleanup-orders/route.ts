@@ -99,8 +99,52 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    if (action === 'bulk-update-case-prices') {
+      const { prices } = body;
+      if (!prices || !Array.isArray(prices)) {
+        return NextResponse.json({ error: 'prices array required' }, { status: 400 });
+      }
+
+      const results: { name: string; status: string; price?: number }[] = [];
+
+      for (const { name, price } of prices) {
+        if (!name || price === undefined || price === null || price === '') {
+          continue; // Skip entries without price
+        }
+
+        // Find retailer by name (case-insensitive partial match)
+        const retailer = await prisma.retailer.findFirst({
+          where: { name: { contains: name.trim(), mode: 'insensitive' } },
+        });
+
+        if (retailer) {
+          await prisma.retailer.update({
+            where: { id: retailer.id },
+            data: { casePrice: parseFloat(price) },
+          });
+          results.push({ name: retailer.name, status: 'updated', price: parseFloat(price) });
+        } else {
+          results.push({ name, status: 'not found' });
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `Processed ${results.length} retailers`,
+        results,
+      });
+    }
+
+    if (action === 'list-retailers') {
+      const retailers = await prisma.retailer.findMany({
+        select: { id: true, name: true, code: true, casePrice: true },
+        orderBy: { name: 'asc' },
+      });
+      return NextResponse.json({ retailers });
+    }
+
     return NextResponse.json({
-      error: 'Specify action: "delete-cancelled", "list-orders", or "update-amount"',
+      error: 'Specify action: "delete-cancelled", "list-orders", "update-amount", "bulk-update-case-prices", or "list-retailers"',
     }, { status: 400 });
 
   } catch (error) {
