@@ -19,6 +19,7 @@ export async function GET() {
         lines: {
           select: {
             id: true,
+            qty: true,
           },
         },
       },
