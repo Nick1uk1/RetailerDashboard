@@ -4,12 +4,13 @@ import { randomBytes } from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { config } from '@/lib/config';
 import { requireSuperadmin } from '@/lib/auth/session';
+import { cookies } from 'next/headers';
 
-// Temporary admin endpoint to generate magic links for testing
+// Admin endpoint to generate magic links for testing store logins
 // Only accessible by superadmins
 export async function POST(request: NextRequest) {
   try {
-    await requireSuperadmin();
+    const superadmin = await requireSuperadmin();
 
     const body = await request.json();
     const { email } = body;
@@ -47,6 +48,16 @@ export async function POST(request: NextRequest) {
     });
 
     const magicLink = `${cfg.appUrl}/verify?token=${token}`;
+
+    // Store superadmin email in cookie so they can return to their account
+    const cookieStore = await cookies();
+    cookieStore.set('superadmin_return_email', superadmin.email, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24, // 24 hours
+      path: '/',
+    });
 
     return NextResponse.json({
       success: true,

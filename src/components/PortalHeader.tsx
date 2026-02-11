@@ -2,6 +2,7 @@
 
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 interface User {
   name: string;
@@ -15,14 +16,43 @@ interface User {
 export function PortalHeader({ user }: { user: User }) {
   const router = useRouter();
   const pathname = usePathname();
+  const [canExitStore, setCanExitStore] = useState(false);
+  const [exiting, setExiting] = useState(false);
+
+  const isAdmin = user.role === 'ADMIN';
+  const isSuperadmin = user.role === 'SUPERADMIN';
+
+  // Check if user can exit back to superadmin account
+  useEffect(() => {
+    if (!isSuperadmin) {
+      fetch('/api/auth/exit-store')
+        .then(res => res.json())
+        .then(data => setCanExitStore(data.canExitStore))
+        .catch(() => setCanExitStore(false));
+    }
+  }, [isSuperadmin]);
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });
     router.push('/login');
   }
 
-  const isAdmin = user.role === 'ADMIN';
-  const isSuperadmin = user.role === 'SUPERADMIN';
+  async function handleExitStore() {
+    setExiting(true);
+    try {
+      const res = await fetch('/api/auth/exit-store', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok && data.redirectUrl) {
+        window.location.href = data.redirectUrl;
+      } else {
+        alert(data.error || 'Failed to exit store view');
+        setExiting(false);
+      }
+    } catch {
+      alert('Failed to exit store view');
+      setExiting(false);
+    }
+  }
 
   const isActive = (path: string) => pathname === path;
 
@@ -97,6 +127,21 @@ export function PortalHeader({ user }: { user: User }) {
           </nav>
         </div>
         <div className="user-menu">
+          {canExitStore && (
+            <button
+              onClick={handleExitStore}
+              disabled={exiting}
+              className="btn btn-sm"
+              style={{
+                backgroundColor: '#D4A854',
+                color: 'white',
+                marginRight: '0.5rem',
+                fontWeight: 600,
+              }}
+            >
+              {exiting ? 'Exiting...' : 'Exit Store'}
+            </button>
+          )}
           <div className="user-info">
             <strong>{user.name}</strong>
             {user.retailer && (
