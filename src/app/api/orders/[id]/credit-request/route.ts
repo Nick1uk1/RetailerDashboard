@@ -1,7 +1,32 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { getCurrentUser } from '@/lib/auth/session';
+// import { prisma } from '@/lib/prisma';
+// import { getCurrentUser } from '@/lib/auth/session';
+
+// TEMPORARILY DISABLED - Run database migration first:
+// npx prisma db push
+// Then uncomment this code
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  return NextResponse.json({
+    error: 'Credit request feature not yet available. Database migration pending.',
+    creditRequests: [],
+  });
+}
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  return NextResponse.json({
+    error: 'Credit request feature not yet available. Database migration pending.',
+  }, { status: 503 });
+}
+
+/* ORIGINAL CODE - Uncomment after running: npx prisma db push
 
 export async function GET(
   request: NextRequest,
@@ -123,3 +148,5 @@ export async function POST(
     return NextResponse.json({ error: 'Failed to create credit request' }, { status: 500 });
   }
 }
+
+*/

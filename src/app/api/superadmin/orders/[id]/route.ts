@@ -86,12 +86,13 @@ export async function PATCH(
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    // Update order status (and set deliveredAt if being marked as delivered)
+    // Update order status
+    // TODO: Add deliveredAt after running migration: npx prisma db push
     const order = await prisma.order.update({
       where: { id },
       data: {
         status,
-        deliveredAt: status === 'DELIVERED' ? new Date() : undefined,
+        // deliveredAt: status === 'DELIVERED' ? new Date() : undefined,
       },
     });
 

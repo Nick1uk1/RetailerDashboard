@@ -1,7 +1,31 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+// import { prisma } from '@/lib/prisma';
 import { requireSuperadmin } from '@/lib/auth/session';
+
+// TEMPORARILY DISABLED - Run database migration first:
+// npx prisma db push
+// Then uncomment this code
+
+export async function GET() {
+  try {
+    await requireSuperadmin();
+
+    return NextResponse.json({
+      message: 'Credit request feature not yet available. Database migration pending.',
+      creditRequests: [],
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === 'Unauthorized' || error.message === 'Forbidden') {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+    }
+    return NextResponse.json({ error: 'Failed to get credit requests' }, { status: 500 });
+  }
+}
+
+/* ORIGINAL CODE - Uncomment after running: npx prisma db push
 
 export async function GET() {
   try {
@@ -32,7 +56,7 @@ export async function GET() {
     });
 
     // Get user names for requestedById
-    const userIds = [...new Set(creditRequests.map(cr => cr.requestedById))];
+    const userIds = Array.from(new Set(creditRequests.map(cr => cr.requestedById)));
     const users = await prisma.retailerUser.findMany({
       where: { id: { in: userIds } },
       select: { id: true, name: true, email: true },
@@ -68,3 +92,5 @@ export async function GET() {
     return NextResponse.json({ error: 'Failed to get credit requests' }, { status: 500 });
   }
 }
+
+*/

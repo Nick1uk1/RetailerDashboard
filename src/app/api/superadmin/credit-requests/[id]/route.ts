@@ -1,7 +1,33 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+// import { prisma } from '@/lib/prisma';
 import { requireSuperadmin } from '@/lib/auth/session';
+
+// TEMPORARILY DISABLED - Run database migration first:
+// npx prisma db push
+// Then uncomment this code
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    await requireSuperadmin();
+
+    return NextResponse.json({
+      error: 'Credit request feature not yet available. Database migration pending.',
+    }, { status: 503 });
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === 'Unauthorized' || error.message === 'Forbidden') {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+    }
+    return NextResponse.json({ error: 'Failed to update credit request' }, { status: 500 });
+  }
+}
+
+/* ORIGINAL CODE - Uncomment after running: npx prisma db push
 
 export async function PATCH(
   request: NextRequest,
@@ -57,3 +83,5 @@ export async function PATCH(
     return NextResponse.json({ error: 'Failed to update credit request' }, { status: 500 });
   }
 }
+
+*/
