@@ -161,6 +161,7 @@ export default function SuperadminUsersPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: user.email }),
+        credentials: 'include',
       });
       const data = await res.json();
       if (res.ok) {

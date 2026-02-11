@@ -25,7 +25,7 @@ export function PortalHeader({ user }: { user: User }) {
   // Check if user can exit back to superadmin account
   useEffect(() => {
     if (!isSuperadmin) {
-      fetch('/api/auth/exit-store')
+      fetch('/api/auth/exit-store', { credentials: 'include' })
         .then(res => res.json())
         .then(data => setCanExitStore(data.canExitStore))
         .catch(() => setCanExitStore(false));
@@ -40,7 +40,7 @@ export function PortalHeader({ user }: { user: User }) {
   async function handleExitStore() {
     setExiting(true);
     try {
-      const res = await fetch('/api/auth/exit-store', { method: 'POST' });
+      const res = await fetch('/api/auth/exit-store', { method: 'POST', credentials: 'include' });
       const data = await res.json();
       if (res.ok && data.redirectUrl) {
         window.location.href = data.redirectUrl;
