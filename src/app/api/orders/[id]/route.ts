@@ -17,14 +17,33 @@ export async function GET(
       );
     }
 
-    if (!user.retailerId) {
-      return NextResponse.json(
-        { error: 'Superadmin accounts cannot access orders this way' },
-        { status: 403 }
-      );
-    }
-
     const { id } = await params;
+
+    // Superadmin can view any order
+    if (!user.retailerId) {
+      const order = await prisma.order.findUnique({
+        where: { id },
+        include: {
+          lines: true,
+          linnworksMap: true,
+          retailer: { select: { name: true, code: true } },
+          events: {
+            orderBy: {
+              createdAt: 'asc',
+            },
+          },
+        },
+      });
+
+      if (!order) {
+        return NextResponse.json(
+          { error: 'Order not found' },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json({ order });
+    }
 
     // Check if user is part of a chain
     const userRetailer = await prisma.retailer.findUnique({
