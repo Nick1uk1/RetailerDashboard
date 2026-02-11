@@ -40,8 +40,8 @@ export async function POST(request: NextRequest) {
       data: { passwordHash },
     });
 
-    // Determine redirect based on role
-    const redirectTo = user.role === 'SUPERADMIN' ? '/superadmin-order' : '/catalog';
+    // Redirect to news/landing page after setting password
+    const redirectTo = '/news';
 
     return NextResponse.json({
       success: true,

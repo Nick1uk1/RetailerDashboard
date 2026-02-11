@@ -36,7 +36,7 @@ export default function SetupPasswordPage() {
       const data = await res.json();
 
       if (res.ok) {
-        router.push(data.redirectTo || '/catalog');
+        router.push(data.redirectTo || '/news');
       } else {
         setError(data.error || 'Failed to set password');
       }

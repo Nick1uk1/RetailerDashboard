@@ -31,7 +31,7 @@ function VerifyContent() {
         if (res.ok) {
           setStatus('success');
           setMessage('Successfully logged in! Redirecting...');
-          const redirectTo = data.redirectTo || '/catalog';
+          const redirectTo = data.redirectTo || '/news';
           setTimeout(() => router.push(redirectTo), 1500);
         } else {
           setStatus('error');

@@ -31,7 +31,7 @@ export function PortalHeader({ user }: { user: User }) {
       <div className="container header-inner">
         <div style={{ display: 'flex', alignItems: 'center', gap: '2.5rem' }}>
           <Link
-            href={isSuperadmin ? '/superadmin-order' : '/catalog'}
+            href="/news"
             style={{ display: 'flex', alignItems: 'center' }}
           >
             <img
@@ -44,6 +44,10 @@ export function PortalHeader({ user }: { user: User }) {
             />
           </Link>
           <nav className="nav">
+            {/* News & Updates - visible to all users */}
+            <Link href="/news" className={isActive('/news') ? 'active' : ''}>
+              News
+            </Link>
             {isSuperadmin && (
               <>
                 <Link href="/superadmin-order" className={isActive('/superadmin-order') ? 'active' : ''}>

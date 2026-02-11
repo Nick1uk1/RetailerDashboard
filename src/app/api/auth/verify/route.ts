@@ -38,10 +38,8 @@ export async function GET(request: NextRequest) {
     let redirectTo: string;
     if (!user?.passwordHash) {
       redirectTo = '/setup-password';
-    } else if (user?.role === 'SUPERADMIN') {
-      redirectTo = '/superadmin-order';
     } else {
-      redirectTo = '/catalog';
+      redirectTo = '/news';
     }
 
     return NextResponse.json({
