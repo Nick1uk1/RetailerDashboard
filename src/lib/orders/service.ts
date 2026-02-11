@@ -75,15 +75,25 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     return { success: false, errors: linesValidation.errors };
   }
 
-  // Calculate prices and totals
+  // Calculate prices and totals using retailer's casePrice
   const orderLines = input.lines.map(line => {
     const sku = skuMap.get(line.skuCode)!;
-    const retailerSku = sku.retailers.find(
-      rs => rs.retailerId === input.retailerId
-    );
+    const packSize = sku.packSize || 1;
 
-    const unitPrice = retailerSku?.priceOverride ?? sku.basePrice;
-    const lineTotal = new Decimal(unitPrice).mul(line.qty);
+    // Use retailer's casePrice if set, otherwise fall back to SKU base price
+    let unitPrice: Decimal;
+    if (retailer!.casePrice) {
+      // casePrice is price per case, divide by packSize to get unit price
+      unitPrice = new Decimal(retailer!.casePrice).div(packSize);
+    } else {
+      // Fall back to SKU-specific pricing
+      const retailerSku = sku.retailers.find(
+        rs => rs.retailerId === input.retailerId
+      );
+      unitPrice = new Decimal(retailerSku?.priceOverride ?? sku.basePrice);
+    }
+
+    const lineTotal = unitPrice.mul(line.qty);
 
     return {
       skuId: sku.id,
