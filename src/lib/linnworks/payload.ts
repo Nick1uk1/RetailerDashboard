@@ -67,6 +67,8 @@ export function buildLinnworksPayload(order: OrderWithLines): LinnworksOrderPayl
     HoldOrCancel: false, // false = don't hold the order
     // Link SKUs automatically by matching SKU codes
     AutomaticallyLinkBySKU: true,
+    // Use prices from the portal, don't override with Linnworks stock item prices
+    UseChannelPricing: true,
   };
 
   // Add notes as external notes - split into chunks of 20 words max

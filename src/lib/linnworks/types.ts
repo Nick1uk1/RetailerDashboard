@@ -62,6 +62,7 @@ export interface LinnworksOrderPayload {
   PaymentMethodId?: string;
   Site?: string;
   AutomaticallyLinkBySKU?: boolean;
+  UseChannelPricing?: boolean; // true = use prices from order, don't override with stock item prices
 }
 
 export interface CreateOrderResult {
