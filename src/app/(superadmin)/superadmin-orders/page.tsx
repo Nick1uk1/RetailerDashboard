@@ -10,7 +10,6 @@ interface Order {
   status: string;
   totalAmount: number;
   createdAt: string;
-  isTest: boolean;
   retailer: {
     id: string;
     name: string;
@@ -62,7 +61,6 @@ export default function SuperadminOrdersPage() {
   const [error, setError] = useState('');
   const [filterRetailer, setFilterRetailer] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
-  const [hideTestOrders, setHideTestOrders] = useState(true); // Hide test orders by default
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
@@ -140,15 +138,13 @@ export default function SuperadminOrdersPage() {
   }
 
   const filteredOrders = orders.filter((order) => {
-    if (hideTestOrders && order.isTest) return false;
     if (filterRetailer && order.retailer.id !== filterRetailer) return false;
     if (filterStatus && order.status !== filterStatus) return false;
     return true;
   });
 
-  // Count orders by status (excluding test orders for accurate counts)
-  const realOrders = orders.filter(o => !o.isTest);
-  const statusCounts = realOrders.reduce((acc, order) => {
+  // Count orders by status
+  const statusCounts = orders.reduce((acc, order) => {
     acc[order.status] = (acc[order.status] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
@@ -244,15 +240,6 @@ export default function SuperadminOrdersPage() {
             ))}
           </select>
         </div>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-          <input
-            type="checkbox"
-            checked={hideTestOrders}
-            onChange={(e) => setHideTestOrders(e.target.checked)}
-            style={{ width: '16px', height: '16px' }}
-          />
-          <span style={{ fontSize: '0.875rem', color: 'var(--gray-600)' }}>Hide test orders</span>
-        </label>
         {filterStatus && (
           <button
             onClick={() => setFilterStatus('')}
@@ -286,21 +273,7 @@ export default function SuperadminOrdersPage() {
               {filteredOrders.map((order) => (
                 <tr key={order.id}>
                   <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span style={{ fontWeight: 600 }}>{order.retailer.name}</span>
-                      {order.isTest && (
-                        <span style={{
-                          fontSize: '0.625rem',
-                          padding: '0.125rem 0.375rem',
-                          backgroundColor: 'var(--gray-200)',
-                          color: 'var(--gray-600)',
-                          borderRadius: '4px',
-                          fontWeight: 600,
-                        }}>
-                          TEST
-                        </span>
-                      )}
-                    </div>
+                    <div style={{ fontWeight: 600 }}>{order.retailer.name}</div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)', fontFamily: 'monospace' }}>
                       {order.retailer.code}
                     </div>
