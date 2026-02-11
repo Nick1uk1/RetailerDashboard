@@ -191,8 +191,7 @@ export default function NewsPage() {
               alt="HomeCooks Bento"
               style={{
                 width: '100%',
-                height: '200px',
-                objectFit: 'cover',
+                height: 'auto',
               }}
             />
             <div style={{ padding: '1.5rem' }}>
