@@ -100,19 +100,71 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'bulk-update-case-prices') {
-      const { prices } = body;
-      if (!prices || !Array.isArray(prices)) {
-        return NextResponse.json({ error: 'prices array required' }, { status: 400 });
-      }
+      // Hardcoded price list
+      const priceList: [string, number][] = [
+        ["Budgens Castle Acre", 24.9],
+        ["Pomeroy", 24.9],
+        ["Tufnell Park", 23.4],
+        ["Hampstead Local", 24.9],
+        ["Arbour Farm", 24.9],
+        ["Chessington", 23.4],
+        ["Washingpool", 24.9],
+        ["Weybridge", 24.9],
+        ["Broadstairs", 23.4],
+        ["Gipsy Hill", 24.9],
+        ["Hockenhull", 24.9],
+        ["Crouch End", 23.4],
+        ["Westlands", 23.4],
+        ["Plumpton", 23.4],
+        ["Primrose", 24.9],
+        ["Scotts", 23.4],
+        ["Corby", 24.9],
+        ["Lower Morden", 24.9],
+        ["Ducks Farm", 24.9],
+        ["Loddington", 24.9],
+        ["Simply Fresh", 24.9],
+        ["Brockley", 23.4],
+        ["Frilford", 23.4],
+        ["St Albans", 23.4],
+        ["Graddons", 24.3],
+        ["Harvest N1", 24.9],
+        ["Eton", 23.4],
+        ["Go Puff", 21.42],
+        ["Hinchley", 23.4],
+        ["Country Market", 24.9],
+        ["Horizon", 22.5],
+        ["East Finchley", 23.4],
+        ["Daisy", 23.4],
+        ["Leominster", 23.4],
+        ["Cholmondeley", 24.9],
+        ["Powderham", 23.4],
+        ["Bleadons", 24.9],
+        ["Clifton Greens", 23.4],
+        ["Harvest N16", 23.4],
+        ["Khindas", 23.4],
+        ["Tates", 23.4],
+        ["Artisan Food", 23.4],
+        ["Handcross", 23.4],
+        ["Casey Fields", 24.9],
+        ["Connect", 22.8],
+        ["Ascott", 23.4],
+        ["Goldsmiths", 23.4],
+        ["Cannells", 24.9],
+        ["Market Rasen", 23.4],
+        ["Winning Post", 23.4],
+        ["Ruskington", 23.4],
+        ["Haxey", 23.4],
+        ["Cotswold", 19.5],
+        ["Miara", 23.4],
+        ["Applegarth", 24.9],
+        ["New House Farm", 24.9],
+        ["Evergreen", 24.9],
+        ["Stores Deli", 24.9],
+      ];
 
       const results: { name: string; status: string; price?: number }[] = [];
 
-      for (const { name, price } of prices) {
-        if (!name || price === undefined || price === null || price === '') {
-          continue; // Skip entries without price
-        }
-
-        // Find retailer by name (case-insensitive partial match)
+      for (const [name, price] of priceList) {
         const retailer = await prisma.retailer.findFirst({
           where: { name: { contains: name.trim(), mode: 'insensitive' } },
         });
@@ -120,9 +172,9 @@ export async function POST(request: NextRequest) {
         if (retailer) {
           await prisma.retailer.update({
             where: { id: retailer.id },
-            data: { casePrice: parseFloat(price) },
+            data: { casePrice: price },
           });
-          results.push({ name: retailer.name, status: 'updated', price: parseFloat(price) });
+          results.push({ name: retailer.name, status: 'updated', price });
         } else {
           results.push({ name, status: 'not found' });
         }
