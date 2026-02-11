@@ -260,16 +260,16 @@ export default function NewsPage() {
                   fontWeight: 600,
                 }}
               >
-                REMINDER
+                DELIVERY
               </span>
               <span style={{ color: 'var(--gray-500)', fontSize: '0.875rem' }}>Ongoing</span>
             </div>
             <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--forest)', marginBottom: '0.5rem' }}>
-              Ordering Information
+              Fast Delivery
             </h3>
             <p style={{ color: 'var(--gray-600)', margin: 0, lineHeight: 1.6 }}>
-              Minimum order values vary by retailer - you'll see yours at checkout.
               Orders are processed within 24-48 hours and delivered directly to your store.
+              Need to report an issue? You can request credit within 48 hours of delivery.
             </p>
           </div>
         </div>
