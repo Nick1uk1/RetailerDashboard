@@ -68,7 +68,7 @@ export async function PATCH(
       );
     }
 
-    const validStatuses = ['SUBMITTED', 'CREATED_IN_LINNWORKS', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'FAILED', 'CANCELLED'];
+    const validStatuses = ['SUBMITTED', 'CREATED_IN_LINNWORKS', 'PROCESSING', 'DELIVERED', 'FAILED', 'CANCELLED'];
     if (!validStatuses.includes(status)) {
       return NextResponse.json(
         { error: 'Invalid status' },
@@ -99,7 +99,6 @@ export async function PATCH(
     // Log the status change event
     const eventTypeMap: Record<string, string> = {
       PROCESSING: 'ORDER_PROCESSING',
-      SHIPPED: 'ORDER_SHIPPED',
       DELIVERED: 'ORDER_DELIVERED',
       CANCELLED: 'ORDER_CANCELLED',
     };

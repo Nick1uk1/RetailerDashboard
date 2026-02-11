@@ -27,8 +27,7 @@ interface Retailer {
 const statusBadgeClass: Record<string, string> = {
   SUBMITTED: 'badge-warning',
   CREATED_IN_LINNWORKS: 'badge-info',
-  PROCESSING: 'badge-info',
-  SHIPPED: 'badge-success',
+  PROCESSING: 'badge-success',
   DELIVERED: 'badge-success',
   FAILED: 'badge-danger',
   CANCELLED: 'badge-neutral',
@@ -38,7 +37,6 @@ const statusLabels: Record<string, string> = {
   SUBMITTED: 'Pending',
   CREATED_IN_LINNWORKS: 'Order Placed',
   PROCESSING: 'Processing',
-  SHIPPED: 'Shipped',
   DELIVERED: 'Delivered',
   FAILED: 'Failed',
   CANCELLED: 'Cancelled',
@@ -48,7 +46,6 @@ const statusIcons: Record<string, string> = {
   SUBMITTED: '⏳',
   CREATED_IN_LINNWORKS: '📦',
   PROCESSING: '⚙️',
-  SHIPPED: '🚚',
   DELIVERED: '✓',
   FAILED: '❌',
   CANCELLED: '🚫',
@@ -186,8 +183,7 @@ export default function SuperadminOrdersPage() {
         {[
           { status: 'SUBMITTED', label: 'Pending', color: '#D4A854' },
           { status: 'CREATED_IN_LINNWORKS', label: 'Order Placed', color: '#4a9a9d' },
-          { status: 'PROCESSING', label: 'Processing', color: '#4a9a9d' },
-          { status: 'SHIPPED', label: 'Shipped', color: '#7FB069' },
+          { status: 'PROCESSING', label: 'Processing', color: '#7FB069' },
           { status: 'DELIVERED', label: 'Delivered', color: '#5a8a47' },
         ].map(({ status, label, color }) => (
           <div
@@ -322,10 +318,10 @@ export default function SuperadminOrdersPage() {
                           {(order.status === 'SUBMITTED' || order.status === 'CREATED_IN_LINNWORKS') && (
                             <option value="PROCESSING">→ Processing</option>
                           )}
-                          {(order.status === 'CREATED_IN_LINNWORKS' || order.status === 'PROCESSING') && (
-                            <option value="SHIPPED">→ Shipped</option>
+                          {order.status === 'CREATED_IN_LINNWORKS' && (
+                            <option value="PROCESSING">→ Processing</option>
                           )}
-                          {order.status === 'SHIPPED' && (
+                          {order.status === 'PROCESSING' && (
                             <option value="DELIVERED">→ Delivered</option>
                           )}
                           <option value="CANCELLED">→ Cancel</option>

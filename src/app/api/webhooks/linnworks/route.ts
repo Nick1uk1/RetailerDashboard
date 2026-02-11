@@ -60,8 +60,8 @@ export async function POST(request: NextRequest) {
       case 'dispatched':
       case 'SHIPPED':
       case 'shipped':
-        newStatus = 'SHIPPED';
-        eventType = 'ORDER_SHIPPED';
+        newStatus = 'PROCESSING';
+        eventType = 'ORDER_PROCESSING';
         break;
 
       case 'DELIVERED':
