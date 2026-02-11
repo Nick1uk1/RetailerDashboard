@@ -258,7 +258,7 @@ export default function SuperadminOrdersPage() {
                 <th>Retailer</th>
                 <th>Order Ref</th>
                 <th>PO Number</th>
-                <th>Items</th>
+                <th>SKUs</th>
                 <th>Total</th>
                 <th>Status</th>
                 <th>Date</th>

@@ -87,20 +87,38 @@ export async function GET() {
       }
     }
 
-    // Also fix Cotswold Fayre order amount and status
-    const cotswoldOrders = await prisma.order.findMany({
+    // Find the most recent Cotswold Fayre order
+    const cotswoldOrder = await prisma.order.findFirst({
       where: {
         retailer: { name: { contains: 'Cotswold', mode: 'insensitive' } },
       },
+      orderBy: { createdAt: 'desc' },
     });
 
     let orderFixResult = 'No Cotswold orders found';
-    if (cotswoldOrders.length > 0) {
-      await prisma.order.updateMany({
-        where: { id: { in: cotswoldOrders.map(o => o.id) } },
+
+    if (cotswoldOrder) {
+      // Fix the Cotswold order
+      await prisma.order.update({
+        where: { id: cotswoldOrder.id },
         data: { totalAmount: 1345.50, status: 'PROCESSING' },
       });
-      orderFixResult = `Fixed ${cotswoldOrders.length} Cotswold order(s) to £1345.50 and status PROCESSING`;
+
+      // Delete all other orders (not the Cotswold one)
+      const otherOrders = await prisma.order.findMany({
+        where: { id: { not: cotswoldOrder.id } },
+        select: { id: true },
+      });
+
+      if (otherOrders.length > 0) {
+        const otherIds = otherOrders.map(o => o.id);
+        await prisma.orderEventLog.deleteMany({ where: { orderId: { in: otherIds } } });
+        await prisma.linnworksOrderMap.deleteMany({ where: { orderId: { in: otherIds } } });
+        await prisma.orderLine.deleteMany({ where: { orderId: { in: otherIds } } });
+        await prisma.order.deleteMany({ where: { id: { in: otherIds } } });
+      }
+
+      orderFixResult = `Fixed Cotswold order to £1345.50 and PROCESSING. Deleted ${otherOrders.length} other order(s).`;
     }
 
     return NextResponse.json({
