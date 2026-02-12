@@ -462,7 +462,13 @@ export default function SuperadminRetailersPage() {
             {filteredRetailers.map((retailer) => (
               <tr key={retailer.id} style={{ opacity: retailer.active ? 1 : 0.5 }}>
                 <td>
-                  <div style={{ fontWeight: 500 }}>{retailer.name}</div>
+                  <div
+                    style={{ fontWeight: 500, cursor: 'pointer', color: 'var(--forest)' }}
+                    onClick={() => handleEdit(retailer)}
+                    title="Click to edit"
+                  >
+                    {retailer.name}
+                  </div>
                   {retailer.city && (
                     <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>
                       {retailer.city}
@@ -484,7 +490,12 @@ export default function SuperadminRetailersPage() {
                 </td>
                 <td style={{ position: 'relative', zIndex: 1 }}>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button onClick={() => handleEdit(retailer)} className="btn btn-primary btn-sm" style={{ position: 'relative', zIndex: 10 }}>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); handleEdit(retailer); }}
+                      className="btn btn-primary btn-sm"
+                      style={{ position: 'relative', zIndex: 10, pointerEvents: 'auto', cursor: 'pointer' }}
+                    >
                       Edit
                     </button>
                     <button
