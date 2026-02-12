@@ -443,18 +443,19 @@ export default function SuperadminRetailersPage() {
           )}
         </div>
 
-        <table>
+        <div style={{ overflowX: 'auto' }}>
+        <table style={{ tableLayout: 'auto', width: '100%' }}>
           <thead>
             <tr>
               <th>Name</th>
               <th>Code</th>
-              <th>Contact</th>
+              <th style={{ maxWidth: '200px' }}>Contact</th>
               <th>Case Price</th>
               <th>Payment Terms</th>
               <th>Users</th>
               <th>Orders</th>
               <th>Status</th>
-              <th>Actions</th>
+              <th style={{ minWidth: '180px' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -469,7 +470,7 @@ export default function SuperadminRetailersPage() {
                   )}
                 </td>
                 <td style={{ fontFamily: 'monospace' }}>{retailer.code}</td>
-                <td>{retailer.contactEmail}</td>
+                <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{retailer.contactEmail}</td>
                 <td style={{ fontWeight: 600 }}>
                   {retailer.casePrice ? `£${Number(retailer.casePrice).toFixed(2)}` : <span style={{ color: 'var(--gray-400)' }}>-</span>}
                 </td>
@@ -481,9 +482,9 @@ export default function SuperadminRetailersPage() {
                     {retailer.active ? 'Active' : 'Inactive'}
                   </span>
                 </td>
-                <td>
+                <td style={{ position: 'relative', zIndex: 1 }}>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button onClick={() => handleEdit(retailer)} className="btn btn-primary btn-sm">
+                    <button onClick={() => handleEdit(retailer)} className="btn btn-primary btn-sm" style={{ position: 'relative', zIndex: 10 }}>
                       Edit
                     </button>
                     <button
@@ -498,6 +499,7 @@ export default function SuperadminRetailersPage() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );
