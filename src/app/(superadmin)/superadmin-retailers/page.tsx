@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 interface Retailer {
   id: string;
@@ -73,6 +73,7 @@ export default function SuperadminRetailersPage() {
   const [loadingRanges, setLoadingRanges] = useState(false);
   const [togglingRange, setTogglingRange] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const formRef = useRef<HTMLDivElement>(null);
 
   // Filter retailers based on search term
   const filteredRetailers = retailers.filter((retailer) => {
@@ -159,6 +160,9 @@ export default function SuperadminRetailersPage() {
     });
     setShowForm(true);
     loadRetailerRanges(retailer.id);
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
   }
 
   function handleNew() {
@@ -258,7 +262,7 @@ export default function SuperadminRetailersPage() {
       )}
 
       {showForm && (
-        <div className="card" style={{ marginBottom: '1.5rem', padding: '1.5rem' }}>
+        <div ref={formRef} className="card" style={{ marginBottom: '1.5rem', padding: '1.5rem' }}>
           <h2 style={{ marginBottom: '1.25rem', color: 'var(--forest)', fontWeight: 700 }}>{editingId ? 'Edit Retailer' : 'New Retailer'}</h2>
           <form onSubmit={handleSubmit}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
