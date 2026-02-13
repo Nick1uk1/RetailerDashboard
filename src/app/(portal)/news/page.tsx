@@ -28,7 +28,7 @@ export default function NewsPage() {
   }, []);
 
   return (
-    <div style={{ margin: '-1.5rem -1.5rem 0 -1.5rem' }}>
+    <div style={{ margin: '-1.5rem -1.5rem 0 -1.5rem', padding: '1rem 1rem 0 1rem' }}>
       {/* Hero Section */}
       <div
         style={{
@@ -37,7 +37,7 @@ export default function NewsPage() {
           textAlign: 'center',
           position: 'relative',
           overflow: 'hidden',
-          borderRadius: '0 0 24px 24px',
+          borderRadius: '24px',
         }}
       >
         {/* Decorative circles */}
