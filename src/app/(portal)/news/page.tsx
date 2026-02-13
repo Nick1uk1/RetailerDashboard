@@ -37,6 +37,7 @@ export default function NewsPage() {
           textAlign: 'center',
           position: 'relative',
           overflow: 'hidden',
+          borderRadius: '0 0 24px 24px',
         }}
       >
         {/* Decorative circles */}
